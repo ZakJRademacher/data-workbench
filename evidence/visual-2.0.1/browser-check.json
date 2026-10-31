@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "browser": "Microsoft Edge / Playwright headless",
+  "javascript_errors": [],
+  "checks": [
+    "demo intake",
+    "recipe controls",
+    "run reconciliation",
+    "review decision",
+    "stale warning",
+    "rerun",
+    "package download",
+    "mobile width",
+    "own-file upload",
+    "field corrections",
+    "duplicate policy",
+    "relationship suggestions",
+    "child aggregation",
+    "join preview and approval",
+    "combined view",
+    "source format controls",
+    "decimal precision controls",
+    "cross-field rule controls"
+  ]
+}

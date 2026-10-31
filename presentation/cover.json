@@ -1,0 +1,19 @@
+{
+  "title": "Data Workbench",
+  "eyebrow": "DATA PREPARATION",
+  "description": "From messy exports to reviewed, reproducible tables.",
+  "format": "Local application · CSV + Excel",
+  "image": "docs/images/review-2.0.1.png",
+  "tokens": "web/design-tokens.json",
+  "color_roles": {
+    "canvas": "canvas",
+    "surface": "surface",
+    "ink": "ink",
+    "muted": "muted",
+    "primary": "primary",
+    "accent": "accent"
+  },
+  "frame_label": "Review workspace",
+  "preview_note": "Original fictional demo",
+  "footer": "PYTHON / SQL / EXACT DECIMALS"
+}

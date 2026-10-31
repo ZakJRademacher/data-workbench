@@ -173,7 +173,15 @@ function switchTab(tab) {
   }
   if (tab === 'export') renderExport();
 }
-$$('[data-tab]').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+$$('[data-tab]').forEach(b => b.onclick = () => {
+  if (b.dataset.tab === state.tab) return;
+  state.tab = b.dataset.tab;
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const transition = document.startViewTransition(() => switchTab(state.tab));
+    // Rapid navigation may skip a visual transition; the DOM update still runs.
+    transition.ready.catch(() => {});
+  } else switchTab(b.dataset.tab);
+});
 $('#open-recipe').onclick = guarded(async () => {
   if (!state.recipe) {
     state.recipe = await post(projectPath() + '/suggest-recipe');
@@ -722,6 +730,28 @@ function renderRun() {
     banner.textContent = (run.stale ? 'Saved result is stale: inputs, recipe, or decisions changed. Rerun. ' : m.status === 'incomplete' ? 'Incomplete project: some files could not be processed. ' : m.status === 'needs_review' ? 'Run saved with records requiring review. ' : 'Project reconciled. ') + `${fmt(m.input_rows)} parsed rows · ${fmt(m.review_rows)} need review.`;
   } else if (run) banner.textContent = run.message;
   $('#review-count').textContent = m ? fmt(m.review_rows) : '—';
+  const populations = m ? [
+    ['accepted', 'Accepted', m.tables.reduce((a, t) => a + t.accepted, 0)],
+    ['review', 'Needs review', m.review_rows],
+    ['excluded', 'Excluded', m.tables.reduce((a, t) => a + t.excluded, 0)]
+  ] : [];
+  let segmentStart = 0;
+  const segments = populations.map(([kind,,n]) => {
+    const width = m.input_rows ? n / m.input_rows * 1000 : 0;
+    const rectangle = n > 0 ? `<rect class="population-segment ${kind}" x="${segmentStart}" y="0" width="${width}" height="12"></rect>` : '';
+    segmentStart += width;
+    return rectangle;
+  }).join('');
+  let arcStart = 0;
+  const circumference = 2 * Math.PI * 65;
+  const arcs = populations.map(([kind,,n]) => {
+    const length = m.input_rows ? n / m.input_rows * circumference : 0;
+    const circle = n > 0 ? `<circle class="population-arc ${kind}" cx="90" cy="90" r="65" stroke-dasharray="${length} ${circumference}" stroke-dashoffset="${-arcStart}"/>` : '';
+    arcStart += length;
+    return circle;
+  }).join('');
+  const acceptedShare = m?.input_rows ? Math.round(populations[0][2] / m.input_rows * 100) + '%' : '—';
+  $('#reconciliation').innerHTML = m ? `<figure class="reconciliation-figure"><figcaption><span>RECORD RECONCILIATION</span><span class="recon-count">${fmt(m.input_rows)} parsed records${m.file_issues.length?' · unreadable-file row counts remain unknown':''}</span></figcaption><div class="recon-content"><div class="recon-ring"><svg viewBox="0 0 180 180" aria-hidden="true"><circle class="ring-track" cx="90" cy="90" r="65"/><g class="ring-arcs">${arcs}</g><text class="ring-value" x="90" y="87" text-anchor="middle">${acceptedShare}</text><text class="ring-caption" x="90" y="108" text-anchor="middle">${m.input_rows?'ACCEPTED SHARE':'NO PARSED ROWS'}</text></svg></div><div class="population-legend">${populations.map(([kind,name,n])=>`<span><i class="${kind}" aria-hidden="true"></i><span>${name}</span><b>${fmt(n)}</b></span>`).join('')}</div></div><svg class="population-bar" viewBox="0 0 1000 12" preserveAspectRatio="none" role="img" aria-label="${populations.map(([,name,n])=>`${name}: ${fmt(n)}`).join('; ')}">${segments}</svg></figure>` : '';
   $('#metrics').innerHTML = m ? [
     ['Parsed input', m.input_rows],
     ['Accepted', m.tables.reduce((a, t) => a + t.accepted, 0)],

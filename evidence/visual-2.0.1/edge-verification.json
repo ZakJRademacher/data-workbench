@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "rapid_navigation_preserves_last_requested_tab": true,
+  "excluded_population_geometry_matches_known_fixture": true,
+  "all_three_status_arcs_render": true,
+  "reduced_motion_disables_donut_animation": true,
+  "zero_rows_show_no_percentage_instead_of_zero_over_zero": true,
+  "mobile_width": 390,
+  "mobile_overflow": false,
+  "javascript_errors": []
+}

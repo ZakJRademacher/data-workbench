@@ -11,7 +11,7 @@ FILES={'.gitignore','LICENSE','README.md','requirements.txt','requirements.lock.
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
-    output=args.output or ROOT/'deliverables/Data-Workbench-2.0.0.zip'
+    output=args.output or ROOT/'deliverables/Data-Workbench-2.0.1.zip'
     output.parent.mkdir(parents=True,exist_ok=True)
     paths=[]
     for path in ROOT.rglob('*'):

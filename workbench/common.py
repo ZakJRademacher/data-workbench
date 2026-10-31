@@ -8,7 +8,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 ROOT = Path(__file__).resolve().parents[1]
 MAX_FILES = 50
 MAX_FILE_BYTES = 50 * 1024 * 1024

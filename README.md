@@ -1,12 +1,14 @@
 # Data Workbench
 
-Turn related CSV and Excel exports into clean tables, reviewed relationships, and a reproducible data package. Version **2.0.0** adds reusable source formats, explicit precision rules and cross-field validation.
+Turn related CSV and Excel exports into clean tables, reviewed relationships, and a reproducible data package. Version **2.0.1** refreshes the workspace and review workbook presentation. It retains version 2's source formats, explicit precision rules and cross-field validation.
 
-[Download the local app](deliverables/Data-Workbench-2.0.0.zip) · [Comparison and benchmark findings](docs/COMPARISON.md) · [Operating guide](docs/OPERATING_GUIDE.md)
+[Download the local app](deliverables/Data-Workbench-2.0.1.zip) · [Comparison and benchmark findings](docs/COMPARISON.md) · [Operating guide](docs/OPERATING_GUIDE.md) · [Preserved 2.0.0 download](deliverables/Data-Workbench-2.0.0.zip)
+
+The visual release adds coordinated screen transitions, an actual-record reconciliation graphic and a responsive dark workspace. Motion follows the system's reduced-motion preference. Historical external benchmarks identify **2.0.0**; the visual release's regression and installation checks are recorded separately.
 
 [Additional checks on 471,908 public-source records](docs/ADDITIONAL_BENCHMARKS.md) document exact preservation results and practical limits for high-precision scientific measurements.
 
-![Reviewed combined table in the fictional demo](evidence/browser/combined-view.png)
+![Data Workbench 2.0.1 — review workspace using the fictional demo](docs/images/review-2.0.1.png)
 
 ## Open the app
 

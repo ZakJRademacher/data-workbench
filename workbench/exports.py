@@ -13,7 +13,7 @@ def write_workbook(con, recipe, manifest, path):
     book = Workbook(write_only=True)
     book.properties.creator = "Zak Rademacher"
     book.properties.lastModifiedBy = "Zak Rademacher"
-    book.properties.title = "Data Workbench · Project review"
+    book.properties.title = "Data Workbench Â· Project review"
     book.properties.description = "Source reconciliation and labeled previews. Complete records are in the accompanying CSV files."
 
     def sheet(title, headers, rows, note):
@@ -24,13 +24,13 @@ def write_workbook(con, recipe, manifest, path):
             special = {"Record ID": 36, "Reason": 64, "Raw values": 85, "Source": 25, "Sheet": 18, "Record / row": 16}
             ws.column_dimensions[get_column_letter(i)].width = special.get(header, min(48, max(22, len(str(header)) + 3)))
         title_cell = WriteOnlyCell(ws, value=title)
-        title_cell.font = Font(name="Calibri", size=16, bold=True, color="123C3A")
+        title_cell.font = Font(name="Arial", size=16, bold=True, color="173562")
         ws.row_dimensions[1].height = 32
         ws.merged_cells.add(f"A1:{get_column_letter(max(2, min(len(headers), 6)))}1")
         ws.append([title_cell])
         note_cell = WriteOnlyCell(ws, value=note)
         note_cell.alignment = Alignment(wrap_text=True, vertical="center")
-        note_cell.font = Font(name="Calibri", size=10, color="657B70")
+        note_cell.font = Font(name="Arial", size=10, color="586B89")
         ws.merged_cells.add(f"A2:{get_column_letter(max(2, min(len(headers), 6)))}2")
         ws.append([note_cell])
         ws.row_dimensions[2].height = 48
@@ -38,8 +38,8 @@ def write_workbook(con, recipe, manifest, path):
         cells = []
         for h in headers:
             cell = WriteOnlyCell(ws, value=h)
-            cell.fill = PatternFill("solid", fgColor="163E3B")
-            cell.font = Font(name="Calibri", bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="2458C8")
+            cell.font = Font(name="Arial", bold=True, color="FFFFFF")
             cell.alignment = Alignment(vertical="center", wrap_text=True)
             cells.append(cell)
         ws.append(cells)
@@ -55,7 +55,7 @@ def write_workbook(con, recipe, manifest, path):
                 if isinstance(value, (dict, list)):
                     value = str(value)
                 cell = WriteOnlyCell(ws, value=safe_text(value))
-                cell.font = Font(name="Calibri", size=11, color="263C43")
+                cell.font = Font(name="Arial", size=11, color="172B49")
                 width = ws.column_dimensions[get_column_letter(col)].width
                 lines = sum(max(1, math.ceil(len(part) / max(1, width - 2))) for part in str(value or '').split('\n'))
                 max_lines = max(max_lines, lines)
@@ -65,7 +65,7 @@ def write_workbook(con, recipe, manifest, path):
                 elif isinstance(value, int):
                     cell.number_format = '#,##0'
                 if count % 2 == 0:
-                    cell.fill = PatternFill("solid", fgColor="F0F5F4")
+                    cell.fill = PatternFill("solid", fgColor="EFF4FC")
                 cells.append(cell)
             ws.row_dimensions[count + 3].height = max(21, min(180, 16 * max_lines))
             ws.append(cells)
