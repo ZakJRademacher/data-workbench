@@ -1,0 +1,21 @@
+{
+  "provenance": "Recorded pre-repair comparison in the approved implementation plan; retained separately from version-2 results.",
+  "old": {
+    "accepted": 291,
+    "review": 10,
+    "excluded": 8,
+    "sales": "57507.7198"
+  },
+  "workbench_v1_closest_supported_recipe": {
+    "accepted": 172,
+    "review": 129,
+    "excluded": 8,
+    "sales": "36232.6048"
+  },
+  "discovered_defects": [
+    "Excel timestamps truncated",
+    "CamelCase identifiers inferred as numbers",
+    "source-specific consolidated date parsing missing",
+    "shipping-before-order and four-decimal grammar not enforced"
+  ]
+}

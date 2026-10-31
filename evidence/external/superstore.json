@@ -1,0 +1,47 @@
+{
+  "case": "superstore",
+  "configuration": {
+    "duplicate_policy": "keep_all; repeated source lines are preserved",
+    "timestamp_policy": "preserve complete source timestamps as text",
+    "typed_fields": 6
+  },
+  "engine_build": "cfce33c2eadb84e9cbab256f5882b0890bab3237bb6c815755edde42305b9c2e",
+  "file_issues": [],
+  "input_partitioning": null,
+  "old_project_fit": "Unsupported native schema or file format; not scored as a cleaning error",
+  "passed": true,
+  "processing": {
+    "peak_process_rss_mb": 193.1,
+    "processing_seconds": 5.101
+  },
+  "tables": [
+    {
+      "accepted": 9994,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {
+        "discount": "1561.09",
+        "profit": "286397.0217",
+        "quantity": "37873",
+        "sales": "2297200.8603"
+      },
+      "input_rows": 9994,
+      "missing_counts": {},
+      "normalized_rows_sha256": "35cbf981fbe6a36e96c7d454d6828be9655cc054c1f84e98b15f996f7ad71013",
+      "raw_rows_sha256": "342c4ed0a89e73876208c8a92e2f5781e76c6115d131997e5a1b62fe018506b7",
+      "review": 0,
+      "source": "Sample - Superstore.csv",
+      "table": "superstore"
+    }
+  ],
+  "verified_replay_seconds": 0.05,
+  "views": [],
+  "input_files": [
+    {
+      "filename": "Sample - Superstore.csv",
+      "sha256": "58fb59c63089e564d835e4aabe19d371757de1137a5bf1888243ae386c4b7a97",
+      "bytes": 2287806,
+      "cache_relative": "superstore\\Sample - Superstore.csv"
+    }
+  ],
+  "source_fingerprint_verified_against_frozen_manifest": true
+}
