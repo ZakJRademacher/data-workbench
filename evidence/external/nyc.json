@@ -1,0 +1,53 @@
+{
+  "case": "nyc",
+  "configuration": {
+    "duplicate_policy": "keep_all; repeated source lines are preserved",
+    "timestamp_policy": "preserve complete source timestamps as text",
+    "typed_fields": 0
+  },
+  "engine_build": "cfce33c2eadb84e9cbab256f5882b0890bab3237bb6c815755edde42305b9c2e",
+  "file_issues": [],
+  "input_partitioning": null,
+  "old_project_fit": "Unsupported native schema or file format; not scored as a cleaning error",
+  "passed": true,
+  "processing": {
+    "peak_process_rss_mb": 424.7,
+    "processing_seconds": 12.135
+  },
+  "tables": [
+    {
+      "accepted": 50000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 50000,
+      "missing_counts": {
+        "borough": 7,
+        "city": 1917,
+        "closed_date": 614,
+        "descriptor": 221,
+        "incident_zip": 1929,
+        "latitude": 3547,
+        "location_type": 10805,
+        "longitude": 3547,
+        "resolution_action_updated_date": 663,
+        "resolution_description": 4487
+      },
+      "normalized_rows_sha256": "c153d72563a3fcdc8988e4cc384090daba475db8fc224247b22d226d6e9ba7ee",
+      "raw_rows_sha256": "90c1cc6c838818dffe4e34f58163b419ecae5c5b6f61fb989e738f8efc2235cc",
+      "review": 0,
+      "source": "source.csv",
+      "table": "requests"
+    }
+  ],
+  "verified_replay_seconds": 0.234,
+  "views": [],
+  "input_files": [
+    {
+      "filename": "source.csv",
+      "sha256": "e55afc930cc5cad8736baf5f70e5a9891385c5245458cd34592a5f0fa668ed1f",
+      "bytes": 18873455,
+      "cache_relative": "nyc\\source.csv"
+    }
+  ],
+  "source_fingerprint_verified_against_frozen_manifest": true
+}
