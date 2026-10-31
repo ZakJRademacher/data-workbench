@@ -1,0 +1,320 @@
+{
+  "case": "chicago",
+  "configuration": {
+    "duplicate_policy": "keep_all; repeated source lines are preserved",
+    "timestamp_policy": "preserve complete source timestamps as text",
+    "typed_fields": 0
+  },
+  "engine_build": "cfce33c2eadb84e9cbab256f5882b0890bab3237bb6c815755edde42305b9c2e",
+  "file_issues": [],
+  "input_partitioning": {
+    "original_bytes": 64790003,
+    "original_sha256": "fb60d7a1baef3d579e2dd707b6174de147349abc3a29f412f75c05c994cfac3c",
+    "partitions": [
+      {
+        "file": "source-part-01.csv",
+        "rows": 5000,
+        "sha256": "708d670dd4bc66a525a00934f9d588985b21ea83133b9ac5fdccf6f178f3551a",
+        "source_first_record": 2
+      },
+      {
+        "file": "source-part-02.csv",
+        "rows": 5000,
+        "sha256": "402ac49adab3bb75ff02475d83d11ce4829e1a285f5f803e33ee663268e45232",
+        "source_first_record": 5002
+      },
+      {
+        "file": "source-part-03.csv",
+        "rows": 5000,
+        "sha256": "aff209eb70501b66f4e070f03b2772ff6bd866c32dde822c0c14c7114e1aea28",
+        "source_first_record": 10002
+      },
+      {
+        "file": "source-part-04.csv",
+        "rows": 5000,
+        "sha256": "3aac446cdba23d9a38d108af5487e42a0bdef172d773b90e42e6e63cdc0166f4",
+        "source_first_record": 15002
+      },
+      {
+        "file": "source-part-05.csv",
+        "rows": 5000,
+        "sha256": "3ec48ed0f5f37fe98cfd29d12e2b7570dba2af989400d9b2331247adb6a73cd6",
+        "source_first_record": 20002
+      },
+      {
+        "file": "source-part-06.csv",
+        "rows": 5000,
+        "sha256": "b32f3e6de8a8a76971fcdb0205417a4ddfdcf87dad2a95b0b0af0ceb82c1a76c",
+        "source_first_record": 25002
+      },
+      {
+        "file": "source-part-07.csv",
+        "rows": 5000,
+        "sha256": "2f5238aa6c8adc7dcfde73e0427d17341d4563c7caaf797f782105f7508373de",
+        "source_first_record": 30002
+      },
+      {
+        "file": "source-part-08.csv",
+        "rows": 5000,
+        "sha256": "ded61fc94e65cdd47021f9846394959f9994d895456f4ad06d34fed8b184d33b",
+        "source_first_record": 35002
+      },
+      {
+        "file": "source-part-09.csv",
+        "rows": 5000,
+        "sha256": "1cedd02b865f3dfb7f8b2774e30da349bcbe6dd9c4aab49a40367b720d9fbd58",
+        "source_first_record": 40002
+      },
+      {
+        "file": "source-part-10.csv",
+        "rows": 5000,
+        "sha256": "7af8c4bbb2a33d3e5fa5a248ef48ab1040d31ca09b305a5a851d7d9afa0cdfb9",
+        "source_first_record": 45002
+      }
+    ],
+    "reason": "Source exceeds the unchanged 50 MB single-file limit. Lossless CSV partition only; no value cleaning.",
+    "every_original_field_in_order_verified": true
+  },
+  "old_project_fit": "Unsupported native schema or file format; not scored as a cleaning error",
+  "passed": true,
+  "processing": {
+    "peak_process_rss_mb": 1015.7,
+    "processing_seconds": 24.257
+  },
+  "tables": [
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "address": 2,
+        "aka_name": 116,
+        "city": 9,
+        "facility_type": 202,
+        "latitude": 17,
+        "location": 17,
+        "longitude": 17,
+        "risk": 7,
+        "violations": 1436,
+        "zip": 3
+      },
+      "normalized_rows_sha256": "73647a01b4c1750314ba9e7cc846ad86b0af1b4f4dfffb312edc0c0077612e81",
+      "raw_rows_sha256": "e64c4030611a7c1ff34901b7b43fbc31ae048a399d7f6de831d1f2d8e5e32f18",
+      "review": 0,
+      "source": "source-part-01.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 68,
+        "city": 1,
+        "facility_type": 189,
+        "latitude": 24,
+        "license": 1,
+        "location": 24,
+        "longitude": 24,
+        "risk": 1,
+        "violations": 1538
+      },
+      "normalized_rows_sha256": "cb515396687dcabdcef8c5b8c1a01b9ab12258ca90105e065be3569aab085f6f",
+      "raw_rows_sha256": "0e107123de60d9a3907677f15c5ec7216748ce5c9d507164277dbfdacc99d024",
+      "review": 0,
+      "source": "source-part-02.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 63,
+        "city": 1,
+        "facility_type": 235,
+        "latitude": 13,
+        "license": 1,
+        "location": 13,
+        "longitude": 13,
+        "risk": 2,
+        "violations": 1497,
+        "zip": 1
+      },
+      "normalized_rows_sha256": "bbd885d2351beefb1a02b98274b17479e0cf3da8e023d1e2effa953eee760748",
+      "raw_rows_sha256": "8a8cb09a88d1f6e7e6d4a6da224f128d561bcd9fd0ca670e3b641423e068e2b6",
+      "review": 0,
+      "source": "source-part-03.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 115,
+        "city": 3,
+        "facility_type": 285,
+        "latitude": 16,
+        "license": 1,
+        "location": 16,
+        "longitude": 16,
+        "risk": 13,
+        "violations": 1576,
+        "zip": 3
+      },
+      "normalized_rows_sha256": "2e48d4e41d6e9ad25af9ad2ae2c87ea283586efb7199427965d97175cb8fe7df",
+      "raw_rows_sha256": "c880bd3c3a724627e6013aad9dd9079eb51da8cb7b00e75badb8f3c75a762bc1",
+      "review": 0,
+      "source": "source-part-04.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 117,
+        "city": 3,
+        "facility_type": 280,
+        "latitude": 25,
+        "location": 25,
+        "longitude": 25,
+        "risk": 3,
+        "violations": 1512,
+        "zip": 1
+      },
+      "normalized_rows_sha256": "c3b7688fe0a3d9bd2695cbd923fe658a4fdd53c4d3d2a83d2684271dfb514556",
+      "raw_rows_sha256": "10c0e1bd176e999d8750175f4f7b59db3bd1f6e218cdcb9a7bad8426ba2f1854",
+      "review": 0,
+      "source": "source-part-05.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 84,
+        "city": 1,
+        "facility_type": 78,
+        "latitude": 14,
+        "location": 14,
+        "longitude": 14,
+        "risk": 3,
+        "violations": 1137
+      },
+      "normalized_rows_sha256": "03f4393f1fabf3798e79d60653e20d0dfab46efb11bd8c5fe99f60bb5d96fbff",
+      "raw_rows_sha256": "0c7479085d00df7b9332829c61a217f139e9bb457c9f75224687a8ad27e5b426",
+      "review": 0,
+      "source": "source-part-06.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 71,
+        "city": 6,
+        "facility_type": 168,
+        "latitude": 18,
+        "location": 18,
+        "longitude": 18,
+        "violations": 1445,
+        "zip": 3
+      },
+      "normalized_rows_sha256": "09e6bfae24d82d24bbe74bff8fd0fc290deb80261d375ed933d103d381bd6b3d",
+      "raw_rows_sha256": "d3450181902c2aef618f24b4ebc74a98a3f90983e81b5e1da0b546a2b990c427",
+      "review": 0,
+      "source": "source-part-07.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 102,
+        "facility_type": 176,
+        "latitude": 25,
+        "license": 1,
+        "location": 25,
+        "longitude": 25,
+        "risk": 2,
+        "violations": 1665,
+        "zip": 1
+      },
+      "normalized_rows_sha256": "8d1dc98bd94ee9c8428e65dcfd5d3c41a0e06e96582bd57f4065f90ce2f38477",
+      "raw_rows_sha256": "8e9325343730572dd938c5e279e4d1e4908729a6e217d5fd54836fcc5962ae1c",
+      "review": 0,
+      "source": "source-part-08.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 91,
+        "city": 1,
+        "facility_type": 263,
+        "latitude": 20,
+        "license": 1,
+        "location": 20,
+        "longitude": 20,
+        "risk": 2,
+        "violations": 1208,
+        "zip": 1
+      },
+      "normalized_rows_sha256": "19cbbeb8ba989546c8422fdc4a426daa310103f3b9378a03e15b036a4c1b4f99",
+      "raw_rows_sha256": "19836e2e5f0a692a23b7add4e3b574bd84fd716e8c61454f0422ea4313d7aa7b",
+      "review": 0,
+      "source": "source-part-09.csv",
+      "table": "inspections"
+    },
+    {
+      "accepted": 5000,
+      "every_field_and_disposition_matches": true,
+      "independent_totals": {},
+      "input_rows": 5000,
+      "missing_counts": {
+        "aka_name": 73,
+        "city": 6,
+        "facility_type": 279,
+        "latitude": 9,
+        "license": 1,
+        "location": 9,
+        "longitude": 9,
+        "risk": 1,
+        "violations": 1458,
+        "zip": 5
+      },
+      "normalized_rows_sha256": "8956c951a69b42071d268662cef6c8d0d35eefa9067e8225fd20730141131ef4",
+      "raw_rows_sha256": "6e6bdac71e03d312f87fabf0ee33ae88ea3aa17cf5f85390aae8ebe8669ecbae",
+      "review": 0,
+      "source": "source-part-10.csv",
+      "table": "inspections"
+    }
+  ],
+  "verified_replay_seconds": 1.663,
+  "views": [],
+  "input_files": [
+    {
+      "filename": "source.csv",
+      "sha256": "fb60d7a1baef3d579e2dd707b6174de147349abc3a29f412f75c05c994cfac3c",
+      "bytes": 64790003,
+      "cache_relative": "chicago\\source.csv"
+    }
+  ],
+  "source_fingerprint_verified_against_frozen_manifest": true
+}

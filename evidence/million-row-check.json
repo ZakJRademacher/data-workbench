@@ -1,0 +1,98 @@
+{
+  "elapsed_seconds": 66.462,
+  "engine_version": "2.0.0",
+  "input_bytes": 31438988,
+  "input_rows": 1000000,
+  "message": "Project package saved",
+  "output_bytes": 807261134,
+  "passed": true,
+  "peak_process_rss_mb": 457.4,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 25 Model 33 Stepping 0, AuthenticAMD",
+  "python": "3.12.14",
+  "ram_gb": 127.9,
+  "state": "completed",
+  "tables": [
+    {
+      "accepted": 300000,
+      "excluded": 0,
+      "formula_rows": 0,
+      "input": 300000,
+      "name": "customers",
+      "review": 0,
+      "totals": {}
+    },
+    {
+      "accepted": 350000,
+      "excluded": 0,
+      "formula_rows": 0,
+      "input": 350000,
+      "name": "orders",
+      "review": 0,
+      "totals": {
+        "amount": {
+          "populated": 350000,
+          "sum": "4320960.000000000000"
+        }
+      }
+    },
+    {
+      "accepted": 350000,
+      "excluded": 0,
+      "formula_rows": 0,
+      "input": 350000,
+      "name": "payments",
+      "review": 0,
+      "totals": {
+        "paid_amount": {
+          "populated": 350000,
+          "sum": "4320960.000000000000"
+        }
+      }
+    }
+  ],
+  "totals": {
+    "customers": {},
+    "orders": {
+      "amount": {
+        "populated": 350000,
+        "sum": "4320960.000000000000"
+      }
+    },
+    "payments": {
+      "paid_amount": {
+        "populated": 350000,
+        "sum": "4320960.000000000000"
+      }
+    }
+  },
+  "views": [
+    {
+      "after": 350000,
+      "base": "orders",
+      "before": 350000,
+      "joins": [
+        {
+          "aggregated": false,
+          "base_rows": 350000,
+          "how": "left",
+          "lookup": "customers",
+          "predicted_rows_if_only_join": 350000,
+          "unmatched_base_rows": 0,
+          "unmatched_lookup_rows": 0
+        },
+        {
+          "aggregated": false,
+          "base_rows": 350000,
+          "how": "left",
+          "lookup": "payments",
+          "predicted_rows_if_only_join": 350000,
+          "unmatched_base_rows": 0,
+          "unmatched_lookup_rows": 0
+        }
+      ],
+      "name": "orders_combined"
+    }
+  ],
+  "engine_build": "cfce33c2eadb84e9cbab256f5882b0890bab3237bb6c815755edde42305b9c2e"
+}

@@ -1,0 +1,110 @@
+[
+  {
+    "name": "annotated-doc",
+    "version": "0.0.5",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "annotated-types",
+    "version": "0.8.0",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "anyio",
+    "version": "4.15.1",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "click",
+    "version": "8.5.0",
+    "license": "BSD-3-Clause",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "duckdb",
+    "version": "1.5.6",
+    "license": "See package metadata and included texts.",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "et-xmlfile",
+    "version": "2.0.0",
+    "license": "MIT",
+    "license_texts_captured": 3
+  },
+  {
+    "name": "fastapi",
+    "version": "0.162.0",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "h11",
+    "version": "0.16.0",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "idna",
+    "version": "3.20",
+    "license": "BSD-3-Clause",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "openpyxl",
+    "version": "3.1.5",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "opentelemetry-api",
+    "version": "1.45.2",
+    "license": "Apache-2.0",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "pydantic",
+    "version": "2.14.2",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "pydantic-core",
+    "version": "2.50.2",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "python-multipart",
+    "version": "0.0.32",
+    "license": "Apache-2.0",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "starlette",
+    "version": "1.10.0",
+    "license": "BSD-3-Clause",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "typing-extensions",
+    "version": "4.16.0",
+    "license": "PSF-2.0",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "typing-inspection",
+    "version": "0.4.4",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "uvicorn",
+    "version": "0.54.0",
+    "license": "BSD-3-Clause",
+    "license_texts_captured": 1
+  }
+]

@@ -1,0 +1,147 @@
+{
+  "frozen_at_utc": "2026-10-31T04:17:58.631084+00:00",
+  "sources": [
+    {
+      "name": "UCI Online Retail",
+      "source_url": "https://archive.ics.uci.edu/dataset/352/online+retail",
+      "license": "CC BY 4.0",
+      "selection": "Complete workbook; no record sampling",
+      "acquisition": "downloaded",
+      "source_metadata": null,
+      "files": [
+        {
+          "filename": "Online Retail.xlsx",
+          "sha256": "43465a06f2ccf7c8b5bd2892bc7defb52f97487934fe93b16ae4c3936424676d",
+          "bytes": 23715344,
+          "cache_relative": "uci\\Online Retail.xlsx"
+        }
+      ]
+    },
+    {
+      "name": "Chicago Food Inspections",
+      "source_url": "https://data.cityofchicago.org/d/4ijn-s7e5",
+      "license": "SEE_TERMS_OF_USE",
+      "selection": {
+        "query": {
+          "$where": "inspection_date < '2020-01-01T00:00:00.000'",
+          "$order": "inspection_id",
+          "$limit": "50000"
+        },
+        "rows": 50000
+      },
+      "acquisition": "downloaded",
+      "source_metadata": null,
+      "files": [
+        {
+          "filename": "source.csv",
+          "sha256": "fb60d7a1baef3d579e2dd707b6174de147349abc3a29f412f75c05c994cfac3c",
+          "bytes": 64790003,
+          "cache_relative": "chicago\\source.csv"
+        }
+      ]
+    },
+    {
+      "name": "NYC 311 historical",
+      "source_url": "https://data.cityofnewyork.us/d/76ig-c548",
+      "license": "See publisher terms; no bulk redistribution",
+      "selection": {
+        "query": {
+          "$select": "unique_key,created_date,closed_date,agency,agency_name,complaint_type,descriptor,incident_zip,city,status,borough,resolution_description,resolution_action_updated_date,latitude,longitude,location_type",
+          "$where": "created_date >= '2019-01-01T00:00:00.000' AND created_date < '2020-01-01T00:00:00.000' AND unique_key <= '41406282'",
+          "$order": "unique_key",
+          "$limit": "50000"
+        },
+        "source_url": "https://data.cityofnewyork.us/resource/76ig-c548.json?%24select=unique_key%2Ccreated_date%2Cclosed_date%2Cagency%2Cagency_name%2Ccomplaint_type%2Cdescriptor%2Cincident_zip%2Ccity%2Cstatus%2Cborough%2Cresolution_description%2Cresolution_action_updated_date%2Clatitude%2Clongitude%2Clocation_type&%24where=created_date+%3E%3D+%272019-01-01T00%3A00%3A00.000%27+AND+created_date+%3C+%272020-01-01T00%3A00%3A00.000%27+AND+unique_key+%3C%3D+%2741406282%27&%24order=unique_key&%24limit=50000",
+        "full_2019_rows": 2631126,
+        "range_count": 70252,
+        "first_key": "41306282",
+        "last_key": "41380977",
+        "transport": "Disjoint 5000-key intervals, each limited to 5000 unique integer keys; complete range count checked against independent server count, then filtered and sorted locally.",
+        "equivalence": "The added upper bound contains at least 50000 rows and the global minimum key. Therefore ORDER BY unique_key LIMIT 50000 is unchanged.",
+        "json_to_csv": "Lossless tabular serialization of selected scalar fields; absent optional JSON properties become blank CSV values.",
+        "download_seconds": 17.357
+      },
+      "acquisition": "downloaded",
+      "source_metadata": null,
+      "files": [
+        {
+          "filename": "source.csv",
+          "sha256": "e55afc930cc5cad8736baf5f70e5a9891385c5245458cd34592a5f0fa668ed1f",
+          "bytes": 18873455,
+          "cache_relative": "nyc\\source.csv"
+        }
+      ]
+    },
+    {
+      "name": "Kaggle Superstore",
+      "source_url": "https://www.kaggle.com/datasets/vivek468/superstore-dataset-final",
+      "license": "Other (specified in description); educational purposes only; credits original Tableau creators; no raw redistribution",
+      "selection": "Complete 9994-row cached source",
+      "acquisition": "Existing October 29 download; SHA-256 verified against prior acquisition evidence",
+      "source_metadata": {
+        "filename": "kaggle-view-metadata.json",
+        "sha256": "7879f1529a342d9f98e022e3aeccb2689da37c614119b5ce08db0601c1ea6bc3",
+        "licenseName": "Other (specified in description)"
+      },
+      "files": [
+        {
+          "filename": "Sample - Superstore.csv",
+          "sha256": "58fb59c63089e564d835e4aabe19d371757de1137a5bf1888243ae386c4b7a97",
+          "bytes": 2287806,
+          "cache_relative": "superstore\\Sample - Superstore.csv"
+        }
+      ]
+    },
+    {
+      "name": "Kaggle Olist",
+      "source_url": "https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce",
+      "license": "CC BY-NC-SA 4.0",
+      "selection": "Six original related CSV tables; no geolocation table",
+      "acquisition": "Existing October 16 download; raw per-file hashes checked by benchmark against prior snapshot manifest",
+      "source_metadata": {
+        "filename": "kaggle-view-metadata.json",
+        "sha256": "68c6b07c3c3413ae43ddef2cdf4cb9fd5df5fcf12a76f71a8b4f5be1678db97a",
+        "licenseName": "CC BY-NC-SA 4.0"
+      },
+      "files": [
+        {
+          "filename": "olist_orders_dataset.csv",
+          "sha256": "8df58ef3d2d7e9944010f7beecd9b75367f5588ec6e3c91cec19ae3345ef9ecf",
+          "bytes": 17654914,
+          "cache_relative": "olist\\olist_orders_dataset.csv"
+        },
+        {
+          "filename": "olist_customers_dataset.csv",
+          "sha256": "983a422239e1712ded753b3bf9ecf47dc73f144d306029dcfa99e70a226883d2",
+          "bytes": 9033957,
+          "cache_relative": "olist\\olist_customers_dataset.csv"
+        },
+        {
+          "filename": "olist_order_items_dataset.csv",
+          "sha256": "0bc4d068c4fe38cbb01bd90e8746e3c613fe7b4baef75fab7b0e329701c3e279",
+          "bytes": 15438671,
+          "cache_relative": "olist\\olist_order_items_dataset.csv"
+        },
+        {
+          "filename": "olist_order_payments_dataset.csv",
+          "sha256": "4f713964f2815dbbaa40b9488268c55aac3627bfce5aa96cf58d1f3616de3cc0",
+          "bytes": 5777138,
+          "cache_relative": "olist\\olist_order_payments_dataset.csv"
+        },
+        {
+          "filename": "olist_products_dataset.csv",
+          "sha256": "3e6569628a17fbc75fd206ee357b59e20364b9afa90f5b6cd5b4d624c58aa9cc",
+          "bytes": 2379446,
+          "cache_relative": "olist\\olist_products_dataset.csv"
+        },
+        {
+          "filename": "product_category_name_translation.csv",
+          "sha256": "a81f0d1f27b27e7293f761bc79e3ce8f348ee39c4b3ed3e49bde38f478586278",
+          "bytes": 2613,
+          "cache_relative": "olist\\product_category_name_translation.csv"
+        }
+      ]
+    }
+  ],
+  "bulk_cache_location": "Caller-selected directory outside the project library"
+}

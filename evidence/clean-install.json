@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "archive_sha256": "a986581b0c697409b9c98d93b96797ff797a41ae50234e5881a2220558ab7f76",
+  "python": "3.13.9",
+  "independent_standard_installation": true,
+  "launcher_check": true,
+  "public_launcher_started_server": true,
+  "extracted_source_server": true,
+  "demo_input_rows": 20,
+  "demo_review_rows": 6,
+  "verified_replay": true,
+  "download_and_all_output_hashes": true,
+  "port": 8810
+}

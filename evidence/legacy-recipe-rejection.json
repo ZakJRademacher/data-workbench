@@ -1,0 +1,5 @@
+{
+  "passed": true,
+  "older_validator_rejects_version_2": true,
+  "error": "Use a version 1 recipe object."
+}
