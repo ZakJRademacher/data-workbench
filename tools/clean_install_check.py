@@ -39,7 +39,7 @@ def main():
             try:session=request('/api/session');break
             except OSError:time.sleep(.1)
         else:raise AssertionError('Extracted app did not start')
-        assert session['version']=='2.0.0',session
+        assert session['version']=='2.0.1',session
         assert Path(session['project_root']).resolve()==(root/'projects').resolve(),session
         token=session['token'];project=request('/api/demo',{})
         pid=project['id'];run=request('/api/projects/'+pid+'/runs',{})

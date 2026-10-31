@@ -22,6 +22,7 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--old-project',type=Path,required=True);p.add_argument('--input',type=Path,required=True)
     p.add_argument('--workdir',type=Path,required=True);p.add_argument('--name',required=True);p.add_argument('--native',type=Path)
     p.add_argument('--labels',type=Path,help='Independent seeded ground-truth labels, separate from the old reference.')
+    p.add_argument('--evidence',type=Path,help='Write a new verification record without replacing historical release evidence.')
     args=p.parse_args();old=args.old_project.resolve();work=args.workdir.resolve();work.mkdir(parents=True,exist_ok=True)
     spec=importlib.util.spec_from_file_location('original_sales_reference',old/'src/consolidate.py');reference=importlib.util.module_from_spec(spec);spec.loader.exec_module(reference)
     before=time.perf_counter();expected=reference.consolidate(args.input);old_seconds=time.perf_counter()-before
@@ -77,7 +78,7 @@ def main():
                                'refresh_seconds':native['elapsed_seconds'],'version':native['excel_version']}
         if 'peak_excel_process_rss_mb' in native:
             result['native_excel'].update(peak_excel_process_rss_mb=native['peak_excel_process_rss_mb'],memory_scope=native['memory_scope'])
-    write_json(ROOT/'evidence'/('compatibility-'+args.name+'.json'),result)
+    write_json(args.evidence or ROOT/'evidence'/('compatibility-'+args.name+'.json'),result)
     print(json.dumps(result,indent=2));store.worker.shutdown()
 
 
