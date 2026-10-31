@@ -1,0 +1,230 @@
+{
+  "case": "usgs",
+  "fields": [
+    {
+      "name": "time",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "latitude",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "longitude",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "depth",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "mag",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "magtype",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "nst",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "gap",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "dmin",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "rms",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "net",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "id",
+      "type": "text",
+      "required": true,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "updated",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "place",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "horizontalerror",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "deptherror",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "magerror",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "magnst",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "locationsource",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "magsource",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    }
+  ],
+  "key": [
+    "id"
+  ],
+  "duplicate_policy": "keep_all",
+  "policy": "Preserve complete UTC timestamps and event IDs as text, missing measurements, negative magnitudes/depths and non-earthquake event types. Explicit numeric contract retains up to 12 nonzero fractional places; unsupported numeric spellings go to review."
+}

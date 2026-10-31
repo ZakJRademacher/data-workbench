@@ -1,0 +1,68 @@
+{
+  "case": "usgs",
+  "passed": true,
+  "engine_build": "cfce33c2eadb84e9cbab256f5882b0890bab3237bb6c815755edde42305b9c2e",
+  "tested_public_archive_sha256": "a986581b0c697409b9c98d93b96797ff797a41ae50234e5881a2220558ab7f76",
+  "counts": {
+    "accepted": 4916,
+    "review": 5036
+  },
+  "input_rows": 9952,
+  "excluded": 0,
+  "missing_counts": {
+    "deptherror": 127,
+    "horizontalerror": 282,
+    "magerror": 23,
+    "dmin": 2,
+    "gap": 1,
+    "magnst": 2
+  },
+  "natural_features": {
+    "negative_numeric_cells": 10431
+  },
+  "review_reason_counts": {
+    "excess_decimal_precision": 5036
+  },
+  "all_fields_dispositions_and_source_references_match": true,
+  "all_raw_values_match": true,
+  "accepted_numeric_value_changes": 0,
+  "independent_numeric_control_totals": {
+    "latitude": "206982.374616196931",
+    "longitude": "-472704.007753173769",
+    "depth": "196769.156297444150",
+    "mag": "11869.300000000000",
+    "nst": "155481",
+    "gap": "572453.000000000000",
+    "dmin": "6102.104789259210",
+    "rms": "2539.113124936200",
+    "horizontalerror": "31248.892379232686",
+    "deptherror": "18630.905450871252",
+    "magerror": "911.043700344744",
+    "magnst": "122003"
+  },
+  "processing_seconds": 9.855,
+  "peak_process_rss_mb": 261.1,
+  "cached_replay_seconds": 0.063,
+  "all_output_hashes_verified": true,
+  "file_issues": [],
+  "original_files": [
+    {
+      "filename": "source.csv",
+      "sha256": "506407fd10ff0bdd61ad11fc56bd4c32ac07fa3a99527b80a7075b848fa8cb61",
+      "bytes": 1990838
+    }
+  ],
+  "limits": "Measurements include processing/export after upload setup. RSS is sampled process memory. Review numeric previews use the declared 12-place storage representation; original text remains unchanged in raw audit. Peak RSS includes the benchmark driver and its retained independent-control objects; it is not isolated application-only memory.",
+  "all_exported_csv_cells_and_source_references_match": true,
+  "csv_counts": {
+    "accepted": 4916,
+    "review": 5036
+  },
+  "sampled_type_changes_before_analysis": [
+    {
+      "field": "gap",
+      "sampled_type": "integer",
+      "configured_type": "decimal"
+    }
+  ]
+}

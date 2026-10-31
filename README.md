@@ -4,6 +4,8 @@ Turn related CSV and Excel exports into clean tables, reviewed relationships, an
 
 [Download the local app](deliverables/Data-Workbench-2.0.0.zip) · [Comparison and benchmark findings](docs/COMPARISON.md) · [Operating guide](docs/OPERATING_GUIDE.md)
 
+[Additional checks on 471,908 public-source records](docs/ADDITIONAL_BENCHMARKS.md) document exact preservation results and practical limits for high-precision scientific measurements.
+
 ![Reviewed combined table in the fictional demo](evidence/browser/combined-view.png)
 
 ## Open the app

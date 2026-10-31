@@ -1,5 +1,7 @@
 # Reproduce the comparison
 
+See also [three additional public-source checks](ADDITIONAL_BENCHMARKS.md), run against the published 2.0.0 download. They document 471,908 further records, required type setup, and scientific-number precision limitations separately from the original comparison.
+
 Keep downloaded sources, active databases and bulk outputs in a scratch folder outside the repository. Install runtime requirements plus `requirements-dev.txt` in a Python 3.12+ environment. Native Excel checks additionally need Windows and desktop Excel. Headless browser checks need Microsoft Edge installed. No Kaggle credentials are included or required by the application.
 
 ## Frozen inputs and policy

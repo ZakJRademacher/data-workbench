@@ -1,0 +1,23 @@
+{
+  "affected_cells": {
+    "TEMP:excess_decimal_precision": 687,
+    "TEMP:unsupported_numeric_spelling": 7
+  },
+  "affected_record_reasons": {
+    "excess_decimal_precision": 687,
+    "unsupported_numeric_spelling": 7
+  },
+  "examples": {
+    "TEMP:excess_decimal_precision": [
+      "4.66666666666667",
+      "9.33333333333333",
+      "3.85714285714286"
+    ],
+    "TEMP:unsupported_numeric_spelling": [
+      "-2.77555756156289e-17",
+      "-2.77555756156289e-17",
+      "-2.77555756156289e-17"
+    ]
+  },
+  "note": "Natural source numbers, not injected defects; review means outside the declared numeric import contract, not a false measurement."
+}

@@ -1,0 +1,230 @@
+{
+  "case": "beijing",
+  "fields": [
+    {
+      "name": "no",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "year",
+      "type": "integer",
+      "required": true,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "month",
+      "type": "integer",
+      "required": true,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "day",
+      "type": "integer",
+      "required": true,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "hour",
+      "type": "integer",
+      "required": true,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "pm2_5",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "pm10",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "so2",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "no2",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "co",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "o3",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "temp",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "pres",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "dewp",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "rain",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "wd",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "wspm",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "station",
+      "type": "text",
+      "required": true,
+      "trim": true,
+      "missing": [
+        "NA"
+      ],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    }
+  ],
+  "key": [
+    "station",
+    "year",
+    "month",
+    "day",
+    "hour"
+  ],
+  "duplicate_policy": "keep_all",
+  "policy": "Append 12 stations, retain each station/hour. NA is a documented missing marker, never zero; retain negative temperatures."
+}
