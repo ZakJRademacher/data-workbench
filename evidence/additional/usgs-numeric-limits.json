@@ -1,0 +1,40 @@
+{
+  "affected_cells": {
+    "depth:excess_decimal_precision": 802,
+    "magError:excess_decimal_precision": 3457,
+    "mag:excess_decimal_precision": 4,
+    "horizontalError:excess_decimal_precision": 753,
+    "depthError:excess_decimal_precision": 760
+  },
+  "affected_record_reasons": {
+    "excess_decimal_precision": 5036
+  },
+  "examples": {
+    "depth:excess_decimal_precision": [
+      "-2.7000000476837",
+      "1.1399999856949",
+      "3.6500000953674"
+    ],
+    "magError:excess_decimal_precision": [
+      "0.20990232814221",
+      "0.15064929863387",
+      "0.16079115215232"
+    ],
+    "mag:excess_decimal_precision": [
+      "1.5076049566269",
+      "1.7423667354783",
+      "1.8659760482565"
+    ],
+    "horizontalError:excess_decimal_precision": [
+      "0.61156959966759",
+      "0.64499781178266",
+      "0.43423069743017"
+    ],
+    "depthError:excess_decimal_precision": [
+      "1.3786053019813",
+      "0.8505345216693",
+      "0.92434176783676"
+    ]
+  },
+  "note": "Natural source numbers, not injected defects; review means outside the declared numeric import contract, not a false measurement."
+}

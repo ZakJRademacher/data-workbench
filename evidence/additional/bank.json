@@ -1,0 +1,56 @@
+{
+  "case": "bank",
+  "passed": true,
+  "engine_build": "cfce33c2eadb84e9cbab256f5882b0890bab3237bb6c815755edde42305b9c2e",
+  "tested_public_archive_sha256": "a986581b0c697409b9c98d93b96797ff797a41ae50234e5881a2220558ab7f76",
+  "counts": {
+    "accepted": 41188
+  },
+  "input_rows": 41188,
+  "excluded": 0,
+  "missing_counts": {},
+  "natural_features": {
+    "negative_numeric_cells": 58379,
+    "unknown_category_cells": 12718
+  },
+  "review_reason_counts": {},
+  "all_fields_dispositions_and_source_references_match": true,
+  "all_raw_values_match": true,
+  "accepted_numeric_value_changes": 0,
+  "independent_numeric_control_totals": {
+    "age": "1648511",
+    "duration": "10638243",
+    "campaign": "105754",
+    "pdays": "39642439",
+    "previous": "7124",
+    "emp_var_rate": "3372.700000000000",
+    "cons_price_idx": "3854194.464000000000",
+    "cons_conf_idx": "-1668221.100000000000",
+    "euribor3m": "149153.726000000000",
+    "nr_employed": "212819875.100000000000"
+  },
+  "processing_seconds": 14.04,
+  "peak_process_rss_mb": 205.3,
+  "cached_replay_seconds": 0.141,
+  "all_output_hashes_verified": true,
+  "file_issues": [],
+  "original_files": [
+    {
+      "filename": "bank-additional-full.csv",
+      "sha256": "74adfc578bf77a7ff4bb1ba4a9f8709d9e3c6907342959c2c8416847e0afb4d8",
+      "bytes": 5834924
+    }
+  ],
+  "limits": "Measurements include processing/export after upload setup. RSS is sampled process memory. Review numeric previews use the declared 12-place storage representation; original text remains unchanged in raw audit. Peak RSS includes the benchmark driver and its retained independent-control objects; it is not isolated application-only memory.",
+  "sampled_type_changes_before_analysis": [
+    {
+      "field": "nr_employed",
+      "sampled_type": "integer",
+      "configured_type": "decimal"
+    }
+  ],
+  "all_exported_csv_cells_and_source_references_match": true,
+  "csv_counts": {
+    "accepted": 41188
+  }
+}

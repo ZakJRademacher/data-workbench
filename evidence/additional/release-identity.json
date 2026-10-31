@@ -1,0 +1,6 @@
+{
+  "archive_sha256": "a986581b0c697409b9c98d93b96797ff797a41ae50234e5881a2220558ab7f76",
+  "extracted_files_byte_identical": 98,
+  "python_version": "3.13.9 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 19:09:58) [MSC v.1929 64 bit (AMD64)]",
+  "runtime_requirements": "annotated-doc==0.0.5\nannotated-types==0.8.0\nanyio==4.15.1\nclick==8.5.0\nduckdb==1.5.6\net-xmlfile==2.0.0\nfastapi==0.162.0\nh11==0.16.0\nidna==3.20\nopenpyxl==3.1.5\nopentelemetry-api==1.45.2\npydantic==2.14.2\npydantic-core==2.50.2\npython-multipart==0.0.32\nstarlette==1.10.0\ntyping-extensions==4.16.0\ntyping-inspection==0.4.4\nuvicorn==0.54.0\n"
+}
