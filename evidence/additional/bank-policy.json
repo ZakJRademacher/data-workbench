@@ -1,0 +1,218 @@
+{
+  "case": "bank",
+  "fields": [
+    {
+      "name": "age",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "job",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "marital",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "education",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "default",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "housing",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "loan",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "contact",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "month",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "day_of_week",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "duration",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "campaign",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "pdays",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "previous",
+      "type": "integer",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "poutcome",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "emp_var_rate",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "cons_price_idx",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "cons_conf_idx",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "euribor3m",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "nr_employed",
+      "type": "decimal",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    },
+    {
+      "name": "y",
+      "type": "text",
+      "required": false,
+      "trim": true,
+      "missing": [],
+      "allowed": [],
+      "mapping": {},
+      "inferred": false
+    }
+  ],
+  "key": [],
+  "duplicate_policy": "keep_all",
+  "policy": "Keep unknown categories, pdays=999 sentinel, legitimate repeats and negatives. No imputation."
+}

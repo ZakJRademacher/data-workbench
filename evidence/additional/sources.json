@@ -1,0 +1,187 @@
+{
+  "frozen_at_utc": "2026-10-31T05:01:04.036249+00:00",
+  "application_archive_sha256": "a986581b0c697409b9c98d93b96797ff797a41ae50234e5881a2220558ab7f76",
+  "application_source": "https://github.com/ZakJRademacher/data-workbench",
+  "version": "2.0.0",
+  "sources": [
+    {
+      "case": "bank",
+      "page": "https://archive.ics.uci.edu/dataset/222/bank+marketing",
+      "url": "https://archive.ics.uci.edu/static/public/222/bank%2Bmarketing.zip",
+      "license": "CC BY 4.0; Moro, Rita and Cortez (2014), DOI 10.24432/C5K306",
+      "selection": "Complete bank-additional-full.csv; 41188 records, semicolon-separated. Other variants excluded.",
+      "delimiter": ";",
+      "rows": 41188,
+      "missing": [],
+      "key": [],
+      "integers": [
+        "age",
+        "duration",
+        "campaign",
+        "pdays",
+        "previous"
+      ],
+      "decimals": [
+        "emp.var.rate",
+        "cons.price.idx",
+        "cons.conf.idx",
+        "euribor3m",
+        "nr.employed"
+      ],
+      "policy": "Keep unknown categories, pdays=999 sentinel, legitimate repeats and negatives. No imputation.",
+      "acquired_at_utc": "2026-10-31T05:00:58.060996+00:00",
+      "input_rows": 41188,
+      "transport_archive_sha256": "e0bf5f5de5b846e2f18e9d90606637267d46dfa260e0f17bb12e605db5efbeb4",
+      "files": [
+        {
+          "filename": "bank-additional-full.csv",
+          "sha256": "74adfc578bf77a7ff4bb1ba4a9f8709d9e3c6907342959c2c8416847e0afb4d8",
+          "bytes": 5834924
+        }
+      ]
+    },
+    {
+      "case": "beijing",
+      "page": "https://archive.ics.uci.edu/dataset/501/beijing+multi+site+air+quality+data",
+      "url": "https://archive.ics.uci.edu/static/public/501/beijing%2Bmulti%2Bsite%2Bair%2Bquality%2Bdata.zip",
+      "license": "CC BY 4.0; Chen (2017), DOI 10.24432/C5RK5G; original monitoring/weather agencies credited by UCI",
+      "selection": "All 12 PRSA station CSVs, March 2013-February 2017; 420768 records. Auxiliary data.csv/test.csv excluded.",
+      "delimiter": ",",
+      "rows": 420768,
+      "missing": [
+        "NA"
+      ],
+      "key": [
+        "station",
+        "year",
+        "month",
+        "day",
+        "hour"
+      ],
+      "integers": [
+        "year",
+        "month",
+        "day",
+        "hour"
+      ],
+      "decimals": [
+        "PM2.5",
+        "PM10",
+        "SO2",
+        "NO2",
+        "CO",
+        "O3",
+        "TEMP",
+        "PRES",
+        "DEWP",
+        "RAIN",
+        "WSPM"
+      ],
+      "policy": "Append 12 stations, retain each station/hour. NA is a documented missing marker, never zero; retain negative temperatures.",
+      "acquired_at_utc": "2026-10-31T05:01:00.468221+00:00",
+      "input_rows": 420768,
+      "transport_archive_sha256": "b04da438b2f331ac0ffd45aebdfec0d20d2367feb5f6948c4b1f7ce1191e33c4",
+      "files": [
+        {
+          "filename": "PRSA_Data_Aotizhongxin_20130301-20170228.csv",
+          "sha256": "a94fbcfc71708b6ffdc033360163d91efb7f675e496f6b5860929aa96b96351b",
+          "bytes": 2835916
+        },
+        {
+          "filename": "PRSA_Data_Changping_20130301-20170228.csv",
+          "sha256": "a2e21402a6d95fb7043f87959e6e3dcbecb957aac356a6f8028a85b047c772e7",
+          "bytes": 2722295
+        },
+        {
+          "filename": "PRSA_Data_Dingling_20130301-20170228.csv",
+          "sha256": "3d8dff81f18a80d9f455876a785642bffe1e9b9924ec1e6b7ce8cca790432eeb",
+          "bytes": 2675856
+        },
+        {
+          "filename": "PRSA_Data_Dongsi_20130301-20170228.csv",
+          "sha256": "9c0020214425e5ee2a64d42f97a1f632e1d8f6b53ad50edd85a686cc7999f27e",
+          "bytes": 2636684
+        },
+        {
+          "filename": "PRSA_Data_Guanyuan_20130301-20170228.csv",
+          "sha256": "59390fee3b032597b387491f5230e7edb90a8558e30217ebd6d9befbe669fbf9",
+          "bytes": 2695860
+        },
+        {
+          "filename": "PRSA_Data_Gucheng_20130301-20170228.csv",
+          "sha256": "10ae48801ea55869fee56a48b885fb1127859c130551888d71673f34216ba951",
+          "bytes": 2654625
+        },
+        {
+          "filename": "PRSA_Data_Huairou_20130301-20170228.csv",
+          "sha256": "812dcbe848b3ba2c2d25731064797bff803c46eb0c602156a1fa044df136dc26",
+          "bytes": 2641027
+        },
+        {
+          "filename": "PRSA_Data_Nongzhanguan_20130301-20170228.csv",
+          "sha256": "572cf87b65ef543cd55d3a711b28474def224a46b0ec3fc8add8aaf13b67a487",
+          "bytes": 2839705
+        },
+        {
+          "filename": "PRSA_Data_Shunyi_20130301-20170228.csv",
+          "sha256": "520b59e4ead3b0cfe7f1ed673e30275de8441e999db6f413d5172d2277b8c15a",
+          "bytes": 2620654
+        },
+        {
+          "filename": "PRSA_Data_Tiantan_20130301-20170228.csv",
+          "sha256": "0743e34799cf1ee36195b73321b91baa5625276532e7263c588f68cdef3b4daa",
+          "bytes": 2655061
+        },
+        {
+          "filename": "PRSA_Data_Wanliu_20130301-20170228.csv",
+          "sha256": "0b1a6d754a07f0def2f55434ddfa3870dcd0063b7f766a6f66b6c11bb05a377a",
+          "bytes": 2659544
+        },
+        {
+          "filename": "PRSA_Data_Wanshouxigong_20130301-20170228.csv",
+          "sha256": "ab1d6a356d6997a45f6d657ad47de1e05a4a08d4a7015b38a329a90665ab74d0",
+          "bytes": 2871076
+        }
+      ]
+    },
+    {
+      "case": "usgs",
+      "page": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/csv.php",
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv",
+      "license": "Credit: U.S. Geological Survey. USGS-produced data are U.S. public domain; see https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "selection": "Complete all-events past-30-days CSV at acquisition; rolling feed frozen by SHA-256.",
+      "delimiter": ",",
+      "missing": [],
+      "key": [
+        "id"
+      ],
+      "integers": [
+        "nst",
+        "magNst"
+      ],
+      "decimals": [
+        "latitude",
+        "longitude",
+        "depth",
+        "mag",
+        "gap",
+        "dmin",
+        "rms",
+        "horizontalError",
+        "depthError",
+        "magError"
+      ],
+      "policy": "Preserve complete UTC timestamps and event IDs as text, missing measurements, negative magnitudes/depths and non-earthquake event types. Explicit numeric contract retains up to 12 nonzero fractional places; unsupported numeric spellings go to review.",
+      "acquired_at_utc": "2026-10-31T05:01:03.928586+00:00",
+      "input_rows": 9952,
+      "transport_archive_sha256": "506407fd10ff0bdd61ad11fc56bd4c32ac07fa3a99527b80a7075b848fa8cb61",
+      "files": [
+        {
+          "filename": "source.csv",
+          "sha256": "506407fd10ff0bdd61ad11fc56bd4c32ac07fa3a99527b80a7075b848fa8cb61",
+          "bytes": 1990838
+        }
+      ]
+    }
+  ]
+}
