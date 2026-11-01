@@ -1,14 +1,14 @@
 # Data Workbench
 
-Turn related CSV and Excel exports into clean tables, reviewed relationships, and a reproducible data package. Version **2.0.1** refreshes the workspace and review workbook presentation. It retains version 2's source formats, explicit precision rules and cross-field validation.
+**How can related CSV/XLSX exports become reproducible tables without silently changing their business meaning?**
 
-[Download the local app](deliverables/Data-Workbench-2.0.1.zip) · [Comparison and benchmark findings](docs/COMPARISON.md) · [Operating guide](docs/OPERATING_GUIDE.md) · [Preserved 2.0.0 download](deliverables/Data-Workbench-2.0.0.zip)
+The fictional demo starts at **20 records = 14 accepted + six needing review**. Accepted order amount is **460.8500**, while accepted payment amount is **455.9750** source units. These are separate accepted populations, not an all-order/payment reconciliation. Review decisions and aggregate-before-join safeguards make the differences inspectable.
 
-The visual release adds coordinated screen transitions, an actual-record reconciliation graphic and a responsive dark workspace. Motion follows the system's reduced-motion preference. Historical external benchmarks identify **2.0.0**; the visual release's regression and installation checks are recorded separately.
+[View the current workspace](docs/images/review-2.0.1.png) · [Download local app 2.0.1](deliverables/Data-Workbench-2.0.1.zip) · [Worked preparation exercise](docs/OPERATING_GUIDE.md) · [Verification and limits](docs/COMPARISON.md) · [Checks](#implementation-and-checks)
 
-[Additional checks on 471,908 public-source records](docs/ADDITIONAL_BENCHMARKS.md) document exact preservation results and practical limits for high-precision scientific measurements.
+![Data Workbench 2.0.1, fictional demo and its review queue](docs/images/review-2.0.1.png)
 
-![Data Workbench 2.0.1 — review workspace using the fictional demo](docs/images/review-2.0.1.png)
+This local Python application supplies saved types/rules, corrections, guarded relationships and traceable exports. Choose it for configurable multi-source preparation. The [Excel Export Consolidator](https://github.com/ZakJRademacher/excel-export-consolidator) separately demonstrates native Excel/Power Query over its documented sales contract; it does not require running this app.
 
 ## Open the app
 
@@ -77,3 +77,7 @@ Use a scratch location outside OneDrive for the generated benchmark data. The be
 An independent portfolio demonstration of configurable data preparation and reconciliation, with original fictional demo records. The app does not decide business meaning automatically: review mappings, keys, categories, missing-value policy and relationship grain before using a result for analysis. Successful benchmarks establish the documented cases, not a guarantee for arbitrary data.
 
 Application code and the fictional demo are covered by [MIT](LICENSE). Runtime dependency notices remain in [licenses](licenses/README.md). External datasets retain their publishers' terms and are not bundled. The [original Excel Export Consolidator](https://github.com/ZakJRademacher/excel-export-consolidator) remains available for the native Power Query workflow.
+
+## Release and benchmark history
+
+Version 2.0.1 changes presentation while retaining version 2 source formats, precision and cross-field rules. [Preserved 2.0.0 download](deliverables/Data-Workbench-2.0.0.zip). Historical external comparisons identify 2.0.0; presentation, regression and installation evidence are separate. [Additional public-source checks and scientific-precision limits](docs/ADDITIONAL_BENCHMARKS.md). These documented cases are not universal correctness or speed guarantees.
