@@ -1,18 +1,18 @@
 # Data Workbench
 
-**How can related CSV/XLSX exports become reproducible tables without silently changing their business meaning?**
+Data Workbench is a local app for preparing related CSV and Excel files. You can combine exports, save cleaning rules, review questionable records, and join tables while keeping a record of where each value came from.
 
-The fictional demo starts at **20 records = 14 accepted + six needing review**. Accepted order amount is **460.8500**, while accepted payment amount is **455.9750** source units. These are separate accepted populations, not an all-order/payment reconciliation. Review decisions and aggregate-before-join safeguards make the differences inspectable.
+The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[View the current workspace](docs/images/review-2.0.1.png) · [Download local app 2.0.1](deliverables/Data-Workbench-2.0.1.zip) · [Worked preparation exercise](docs/OPERATING_GUIDE.md) · [Verification and limits](docs/COMPARISON.md) · [Checks](#implementation-and-checks)
+[View the workspace](docs/images/review-2.0.1.png) · [Download version 2.0.1](deliverables/Data-Workbench-2.0.1.zip) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
-![Data Workbench 2.0.1, fictional demo and its review queue](docs/images/review-2.0.1.png)
+![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
-This local Python application supplies saved types/rules, corrections, guarded relationships and traceable exports. Choose it for configurable multi-source preparation. The [Excel Export Consolidator](https://github.com/ZakJRademacher/excel-export-consolidator) separately demonstrates native Excel/Power Query over its documented sales contract; it does not require running this app.
+The separate [Excel Export Consolidator](https://github.com/ZakJRademacher/excel-export-consolidator) runs inside Excel with native Power Query. Workbench is the configurable Python application for CSV/XLSX sources and related tables.
 
 ## Open the app
 
-On Windows, install standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/), including its launcher or PATH option. Download and fully extract the ZIP into a writable folder, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. The first launch needs internet access and installs pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable. No development environment or Node installation is needed.
+On Windows, install standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/), including its launcher or PATH option. Download and fully extract the ZIP into a writable folder, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. The first launch needs internet access and installs pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
 
 The launcher and extracted download were tested with a separate Python 3.13.9 installation. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`; the double-click launcher was verified on Windows only.
 
@@ -32,7 +32,7 @@ Choose **Explore the demo** for a fictional customer, order, and payment project
 
 ## Start with the demo
 
-The first run has **20 input records = 14 accepted + 6 needing review**. Accepted order amount is **460.8500 source units**; accepted payment amount is **455.9750 source units**. These are different measures over different accepted populations, not a reconciliation of all orders against all payments.
+The first run has **20 input records = 14 accepted + 6 needing review**. Accepted order amount is **460.8500 source units**; accepted payment amount is **455.9750 source units**. Orders and payments have different accepted records at this stage, so these two totals are not an all-order/payment reconciliation.
 
 There are two conflicting customer copies, one ambiguous order date, one invalid amount, and two copies of the same order. The fixtures are original fictional data, with no assumed currency. See [the operating guide](docs/OPERATING_GUIDE.md) for a complete review exercise and its expected results.
 
@@ -52,7 +52,7 @@ There are two conflicting customer copies, one ambiguous order date, one invalid
 
 Source, documents, evidence, and completed runs live together in the extracted app folder. Actual user projects are under `projects/` and excluded from Git and release downloads. Active databases and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`; completed packages contain closed database copies. Old source versions and run snapshots remain available on disk.
 
-Processing runs on this computer; there is no hosted upload service. OneDrive synchronization is independent of the app. Saving a file here does not verify cloud synchronization.
+Files are processed on your computer. If you store projects in OneDrive, synchronization is handled separately by OneDrive.
 
 Version-1 recipes migrate with earlier option defaults. Historical inputs, decisions and run snapshots are preserved. New recipes use version 2 and cannot be opened by the earlier app.
 
@@ -60,7 +60,7 @@ To move a project, stop processing and copy its entire `projects/<project-id>/` 
 
 ## Implementation and checks
 
-[Architecture and API](docs/TECHNICAL.md) · [Operating guide and practice exercise](docs/OPERATING_GUIDE.md) · [Verification](docs/QA.md) · [Benchmark reproduction](docs/BENCHMARKS.md) · [Dependency licenses](licenses/README.md)
+[Architecture and API](docs/TECHNICAL.md) · [Operating guide](docs/OPERATING_GUIDE.md) · [Verification](docs/QA.md) · [Benchmark reproduction](docs/BENCHMARKS.md) · [Dependency licenses](licenses/README.md)
 
 From the app folder, using an environment with `requirements-dev.txt` installed:
 
@@ -74,7 +74,7 @@ Use a scratch location outside OneDrive for the generated benchmark data. The be
 
 ## Project scope and licenses
 
-An independent portfolio demonstration of configurable data preparation and reconciliation, with original fictional demo records. The app does not decide business meaning automatically: review mappings, keys, categories, missing-value policy and relationship grain before using a result for analysis. Successful benchmarks establish the documented cases, not a guarantee for arbitrary data.
+This independent project includes original fictional demo records. Before using your own data, confirm the mappings, keys, missing-value rules, and what one row represents. The benchmark guides show which cases were checked and where the app needs more care, including scientific numeric precision.
 
 Application code and the fictional demo are covered by [MIT](LICENSE). Runtime dependency notices remain in [licenses](licenses/README.md). External datasets retain their publishers' terms and are not bundled. The [original Excel Export Consolidator](https://github.com/ZakJRademacher/excel-export-consolidator) remains available for the native Power Query workflow.
 
