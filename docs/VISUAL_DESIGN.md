@@ -15,3 +15,9 @@ Palette values live in `web/design-tokens.json`. Run `python -B tools/build_them
 Practice: change the `accent` color, rebuild the tokens and reload the local demo. Confirm that the selected step and project marker change, while review counts, numeric values and warning messages retain their meaning. Restore the chosen accent afterward.
 
 The browser workflow check covers upload, corrections, relationship approval and downloads. `tools/capture_visual_pilot.py` captures actual fictional demo screens and checks narrow-screen page overflow; use scratch projects outside this repository. Historical benchmark evidence continues to identify the release originally tested.
+
+## Portfolio thumbnails
+
+The shared cover uses a large title, a short tool line and a straight-on project screenshot. `presentation/cover.json` selects the existing source image and its scope label; `presentation/cover-template.html` controls the layout. `portfolio-cover.png` is the 1280 × 960 cover used on the GitHub profile and Upwork. `portfolio-cover-wide.png` is the 1280 × 720 variant. The repository README keeps its larger original report or app preview.
+
+Run the existing `python presentation/build_cover.py --workdir <scratch folder>` to regenerate static covers after a source or title change. The template has no decorative entrance animation. Workbench uses a top crop for the thumbnail; its full workspace screenshot remains available. Keep the source qualifications when changing a cover.
