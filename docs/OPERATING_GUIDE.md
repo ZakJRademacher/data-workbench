@@ -1,5 +1,7 @@
 # Operating Data Workbench
 
+The fictional demo shows the full workflow: inspect files, choose rules, review exceptions, and join the corrected tables. Start there before adding your own exports.
+
 ## The first five minutes
 
 1. Open `Start Workbench.cmd` and choose **Explore the demo**.
@@ -10,7 +12,7 @@
 
 ## Resolve the fictional demo
 
-These are exercise decisions for fictional data, not general rules to apply to a real client:
+For this fictional demo, use the following stated corrections. Real source corrections would need supporting evidence:
 
 - For order `O102`, check the `order_date` correction box and enter `2026-01-05`. The exercise's intended date is January 5; the app does not infer that from `01/05/2026`.
 - For order `O104`, correct `amount` to `30.00`, the exercise's intended value.
