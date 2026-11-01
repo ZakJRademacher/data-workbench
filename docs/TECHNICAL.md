@@ -1,6 +1,6 @@
 # Architecture and local API
 
-Python 3.12+, FastAPI/Uvicorn, DuckDB, openpyxl, and bundled browser assets. No Node installation is needed to run the app. Versions and dependency licenses are captured with the release.
+The local server uses Python 3.12+ with FastAPI/Uvicorn. DuckDB handles preparation and joins, and openpyxl reads Excel files. Browser assets are bundled, so running the app does not need Node. The release records exact dependency versions and licenses.
 
 ## Pipeline
 

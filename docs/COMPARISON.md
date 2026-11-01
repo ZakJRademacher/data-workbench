@@ -1,6 +1,6 @@
-# Excel Consolidator and Data Workbench: qualification findings
+# Excel Consolidator and Data Workbench: comparison
 
-**Data Workbench 2.0.0 qualifies as the featured portfolio replacement for the documented preparation workloads.** It now reproduces the original sales contract and adds configurable related-table preparation. The preserved Excel workbook remains useful for a native Power Query handoff without Python. This judgment concerns the verified deliverable; it does not establish independent mastery of every implementation technology or client outcomes.
+This comparison checks where Data Workbench 2.0.0 matches the Excel Consolidator and where their purposes differ. Workbench reproduces the documented sales result and adds configurable related-table preparation. Excel Consolidator remains the native Power Query option for a handoff that does not require Python. Version 2.0.1 retains this behavior; the external benchmark results below identify the 2.0.0 release actually tested.
 
 ## Before and after
 
@@ -76,6 +76,6 @@ Native Excel 16.0 refreshed disposable workbook copies, and all accepted records
 
 Setup effort was observed as the operations above; no invented human setup-time metric is claimed. Workbench requires more up-front policy choices for unfamiliar data. It does not infer whether two datasets share business meaning, whether a missing value is invalid, or which duplicate policy is appropriate. The Excel version remains a competent specialized deliverable and is preserved as an alternative workflow.
 
-**Publication gates pass:** 22 Workbench regressions; 16 preserved Excel tests; browser controls and review/rerun workflow; two native Excel comparisons; all five external sources; independent seed-42 labels; one-million-row capacity case; standard-Python clean download/launcher/export checks; migration/history preservation and older-version rejection. [Qualification record](../evidence/qualification.json) · [Verification scope and limitations](QA.md).
+**Recorded checks:** 22 Workbench regressions; 16 preserved Excel tests; browser controls and review/rerun workflow; two native Excel comparisons; all five external sources; independent seed-42 labels; one-million-row capacity case; standard-Python clean download/launcher/export checks; migration/history preservation and older-version rejection. [Qualification record](../evidence/qualification.json) · [Verification scope and limitations](QA.md).
 
-The resulting replacement is a local preparation tool with documented safeguards. It is suitable for the tested analysis-preparation contracts when users confirm mappings, grain and business rules; it is not a promise of autonomous correctness for arbitrary data.
+For the tested workloads, Workbench preserves the expected records and totals under the saved rules. New data still needs someone to confirm mappings, record grain, and business rules before interpreting its output.
