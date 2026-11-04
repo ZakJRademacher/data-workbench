@@ -38,25 +38,7 @@ There are two conflicting customer copies, one ambiguous order date, one invalid
 
 ## Limits and interpretation
 
-- Up to **50 sources, 50 MB each, 250 MB combined, and 1,000,000 parsed input rows**. One processing job at a time. Preview pages are bounded; full datasets remain in exports.
-- CSV: UTF-8, Windows-1252, or explicitly selected UTF-16; comma, semicolon, tab, or pipe delimiters. Source references count logical CSV records, including headers, rather than physical lines inside quoted records.
-- Excel: `.xlsx`, one selected sheet per source. Split workbooks containing separate tables into sheets or files. Legacy `.xls`, macros, merged analytical layouts, PDF extraction, and automatic formula recalculation are outside this version.
-- Formula inputs use the workbook's stored results. Formula text and cache provenance are retained in the audit; freshness is unverified. Missing cached results go to review. Numeric cells with simple zero-padding formats preserve displayed leading zeros.
-- Dates require an explicit format. Ambiguous source dates remain text until you choose a rule. Complete Excel timestamps are retained as text; choosing Date requests a date-only field. Decimal scale supports up to 12 fractional places and 26 whole-number digits. The default ignores redundant trailing zeros; a strict scale rejects every extra fractional digit. Excess precision goes to review rather than being rounded.
-- A relationship suggestion is evidence of compatible data, not proof of business meaning. No fuzzy entity merging, imputation, unit conversion, or currency conversion is performed.
-- Field profiles show missing/invalid-null counts and distinct values. Numeric outliers use 1.5 × IQR as a diagnostic only; they are retained.
-- File errors make the project **incomplete**. Accepted outputs then cover only readable sources. The app never labels that subset a complete project.
-- CSV formula-looking text is made inert with an apostrophe. Typed numeric negatives stay numeric. Original source bytes and raw audit JSON preserve the original text.
-
-## Storage and reproducibility
-
-Source, documents, evidence, and completed runs live together in the extracted app folder. Actual user projects are under `projects/` and excluded from Git and release downloads. Active databases and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`; completed packages contain closed database copies. Old source versions and run snapshots remain available on disk.
-
-Files are processed on your computer. If you store projects in OneDrive, synchronization is handled separately by OneDrive.
-
-Version-1 recipes migrate with earlier option defaults. Historical inputs, decisions and run snapshots are preserved. New recipes use version 2 and cannot be opened by the earlier app.
-
-To move a project, stop processing and copy its entire `projects/<project-id>/` folder into the destination app's `projects/` folder. A recipe alone contains source identifiers, so importing it into a different project requires updating its source mappings.
+Workbench accepts up to **50 sources, 50 MB each, 250 MB combined, and 1,000,000 parsed input rows**, with one processing job at a time. It reads CSV and one selected `.xlsx` sheet per source. Formula values depend on workbook caches; dates need an explicit format. It does not infer currencies, merge similar entities, or recalculate Excel formulas. File errors mark a project incomplete, even when readable sources produce partial outputs. [Complete input, precision, review, and storage limits](docs/OPERATING_GUIDE.md#limits-and-interpretation).
 
 ## Implementation and checks
 
@@ -78,6 +60,6 @@ This independent project includes original fictional demo records. Before using 
 
 Application code and the fictional demo are covered by [MIT](LICENSE). Runtime dependency notices remain in [licenses](licenses/README.md). External datasets retain their publishers' terms and are not bundled. The [original Excel Export Consolidator](https://github.com/ZakJRademacher/excel-export-consolidator) remains available for the native Power Query workflow.
 
-## Release and benchmark history
+## Benchmark context
 
-Version 2.0.1 changes presentation while retaining version 2 source formats, precision and cross-field rules. [Preserved 2.0.0 download](deliverables/Data-Workbench-2.0.0.zip). Historical external comparisons identify 2.0.0; presentation, regression and installation evidence are separate. [Additional public-source checks and scientific-precision limits](docs/ADDITIONAL_BENCHMARKS.md). These documented cases are not universal correctness or speed guarantees.
+The [comparison and limits](docs/COMPARISON.md) distinguish current application checks from historical external benchmarks of version 2.0.0. [Additional public-source checks](docs/ADDITIONAL_BENCHMARKS.md) document scientific precision limits. The earlier 2.0.0 package remains available in [repository history](https://github.com/ZakJRademacher/data-workbench/blob/79d89586061172ac1f6a9a58dc3eb913b4976966/deliverables/Data-Workbench-2.0.0.zip); these cases are not universal correctness or speed guarantees.

@@ -12,7 +12,6 @@ The separate motion-study page presents a recording of the app. Its frame entran
 
 Palette values live in `web/design-tokens.json`. Run `python -B tools/build_theme.py` after changing them. This regenerates `web/theme-tokens.css`; `web/studio.css` controls the visual composition over the existing component structure. No external font download is needed.
 
-Practice: change the `accent` color, rebuild the tokens and reload the local demo. Confirm that the selected step and project marker change, while review counts, numeric values and warning messages retain their meaning. Restore the chosen accent afterward.
 
 The browser workflow check covers upload, corrections, relationship approval and downloads. `tools/capture_visual_pilot.py` captures actual fictional demo screens and checks narrow-screen page overflow; use scratch projects outside this repository. Historical benchmark evidence continues to identify the release originally tested.
 

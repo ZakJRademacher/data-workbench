@@ -63,7 +63,9 @@ python -B -m pytest tests -q
 python -B tools/browser_check.py --workdir C:/Temp/WorkbenchBenchmark/browser --evidence evidence/browser
 python -B tools/benchmark.py --workdir C:/Temp/WorkbenchBenchmark/million --evidence evidence/million-row-check.json
 python -B tools/package_release.py
-python -B tools/clean_install_check.py --archive deliverables/Data-Workbench-2.0.0.zip --workdir C:/Temp/WorkbenchBenchmark/clean --python C:/Python313/python.exe --evidence evidence/clean-install.json
+python -B tools/clean_install_check.py --archive C:/Temp/WorkbenchBenchmark/Data-Workbench-2.0.0.zip --workdir C:/Temp/WorkbenchBenchmark/clean --python C:/Python313/python.exe --evidence evidence/clean-install.json
 ```
 
 Use a fresh scratch folder and ensure port 8810 is free for the clean-install check. It extracts the download, creates a standard-Python environment, runs the public launcher, processes the fictional demo, verifies cached replay and checks every exported hash. Packaging excludes private projects, environments, caches and external raw data.
+
+The clean-install command above uses the archived [2.0.0 package](https://github.com/ZakJRademacher/data-workbench/blob/79d89586061172ac1f6a9a58dc3eb913b4976966/deliverables/Data-Workbench-2.0.0.zip), downloaded to the stated scratch path. Current downloads and new installation checks use version 2.0.1.
