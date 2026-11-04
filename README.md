@@ -4,7 +4,7 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[View the workspace](docs/images/review-2.0.1.png) · [Download version 2.0.1](deliverables/Data-Workbench-2.0.1.zip) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[View the workspace](docs/images/review-2.0.1.png) · [Download version 2.0.1](https://github.com/ZakJRademacher/data-workbench/raw/refs/heads/main/deliverables/Data-Workbench-2.0.1.zip) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
@@ -34,7 +34,7 @@ Choose **Explore the demo** for a fictional customer, order, and payment project
 
 The first run has **20 input records = 14 accepted + 6 needing review**. Accepted order amount is **460.8500 source units**; accepted payment amount is **455.9750 source units**. Orders and payments have different accepted records at this stage, so these two totals are not an all-order/payment reconciliation.
 
-There are two conflicting customer copies, one ambiguous order date, one invalid amount, and two copies of the same order. The fixtures are original fictional data, with no assumed currency. See [the operating guide](docs/OPERATING_GUIDE.md) for a complete review exercise and its expected results.
+There are two conflicting customer copies, one ambiguous order date, one invalid amount, and two copies of the same order. The fixtures are original fictional data, with no assumed currency. See [the operating guide](docs/OPERATING_GUIDE.md) for the demo walkthrough and expected results.
 
 ## Limits and interpretation
 
