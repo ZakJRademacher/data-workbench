@@ -14,9 +14,9 @@ The fictional demo shows the full workflow: inspect files, choose rules, review 
 
 For this fictional demo, use the following stated corrections. Real source corrections would need supporting evidence:
 
-- For order `O102`, check the `order_date` correction box and enter `2026-01-05`. The exercise's intended date is January 5; the app does not infer that from `01/05/2026`.
-- For order `O104`, correct `amount` to `30.00`, the exercise's intended value.
-- For the customer copy named `June B.`, choose **Explicitly exclude**. The exercise retains the `June Brooks` customer record.
+- For order `O102`, check the `order_date` correction box and enter `2026-01-05`. The demo's intended date is January 5; the app does not infer that from `01/05/2026`.
+- For order `O104`, correct `amount` to `30.00`, the demo's intended value.
+- For the customer copy named `June B.`, choose **Explicitly exclude**. The demo retains the `June Brooks` customer record.
 - In the orders recipe, change duplicates to **Exclude exact repeats**. This policy keeps one valid copy of `O106` and records the other as excluded.
 - Save and rerun. Expect **20 = 18 accepted + 0 review + 2 excluded** (5 customers, 7 orders, 6 payments), with **7 accepted orders totaling 625.9750** source units.
 
@@ -66,8 +66,24 @@ Version 2 reads version-1 recipes with their previous defaults, then saves new e
 - `data.duckdb`: closed snapshot of clean tables and result/audit tables. Open read-only in a DuckDB-capable tool.
 - `manifest.json`: source hashes, output hashes, counts, totals, profiles, and run status. It is published last.
 
-## A practical modification
+## Limits and interpretation
 
-Change the customers region mapping from `E → East` to `E → Eastern`, rerun, and inspect customer `002`. Its clean region should change to `Eastern`; its raw region should remain `E`; row counts and order/payment totals should be unchanged. The old run should be labeled stale if revisited.
+- Up to **50 sources, 50 MB each, 250 MB combined, and 1,000,000 parsed input rows**. One processing job at a time. Preview pages are bounded; full datasets remain in exports.
+- CSV: UTF-8, Windows-1252, or explicitly selected UTF-16; comma, semicolon, tab, or pipe delimiters. Source references count logical CSV records, including headers, rather than physical lines inside quoted records.
+- Excel: `.xlsx`, one selected sheet per source. Split workbooks containing separate tables into sheets or files. Legacy `.xls`, macros, merged analytical layouts, PDF extraction, and automatic formula recalculation are outside this version.
+- Formula inputs use the workbook's stored results. Formula text and cache provenance are retained in the audit; freshness is unverified. Missing cached results go to review. Numeric cells with simple zero-padding formats preserve displayed leading zeros.
+- Dates require an explicit format. Ambiguous source dates remain text until you choose a rule. Complete Excel timestamps are retained as text; choosing Date requests a date-only field. Decimal scale supports up to 12 fractional places and 26 whole-number digits. The default ignores redundant trailing zeros; a strict scale rejects every extra fractional digit. Excess precision goes to review rather than being rounded.
+- A relationship suggestion is evidence of compatible data, not proof of business meaning. No fuzzy entity merging, imputation, unit conversion, or currency conversion is performed.
+- Field profiles show missing/invalid-null counts and distinct values. Numeric outliers use 1.5 × IQR as a diagnostic only; they are retained.
+- File errors make the project **incomplete**. Accepted outputs then cover only readable sources. The app never labels that subset a complete project.
+- CSV formula-looking text is made inert with an apostrophe. Typed numeric negatives stay numeric. Original source bytes and raw audit JSON preserve the original text.
 
-For a second exercise, make `customer_id` required in orders and inspect how a blank value enters review. Observe how holding that record changes accepted totals without changing the original source.
+## Storage and reproducibility
+
+Source, documents, evidence, and completed runs live together in the extracted app folder. Actual user projects are under `projects/` and excluded from Git and release downloads. Active databases and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`; completed packages contain closed database copies. Old source versions and run snapshots remain available on disk.
+
+Files are processed on your computer. If you store projects in OneDrive, synchronization is handled separately by OneDrive.
+
+Version-1 recipes migrate with earlier option defaults. Historical inputs, decisions and run snapshots are preserved. New recipes use version 2 and cannot be opened by the earlier app.
+
+To move a project, stop processing and copy its entire `projects/<project-id>/` folder into the destination app's `projects/` folder. A recipe alone contains source identifiers, so importing it into a different project requires updating its source mappings.

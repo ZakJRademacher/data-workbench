@@ -72,7 +72,7 @@ def download(url,path):
 
 def acquire(cache,evidence):
     cache.mkdir(parents=True,exist_ok=True)
-    archive=download('https://raw.githubusercontent.com/ZakJRademacher/data-workbench/main/deliverables/Data-Workbench-2.0.0.zip',cache/'published-release.zip')
+    archive=download('https://raw.githubusercontent.com/ZakJRademacher/data-workbench/79d89586061172ac1f6a9a58dc3eb913b4976966/deliverables/Data-Workbench-2.0.0.zip',cache/'published-release.zip')
     app=cache/'release/data-workbench'
     if not app.exists():
         with zipfile.ZipFile(archive) as zipped:
