@@ -25,7 +25,8 @@ def main():
     record={'filename':output.name,'files':len(paths),'bytes':output.stat().st_size,
             'sha256':hashlib.sha256(output.read_bytes()).hexdigest(),
             'excluded':'Private projects, raw external datasets, environments, caches, local paths, and repository administration.'}
-    output.with_suffix('.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+    with output.with_suffix('.json').open('w',encoding='utf-8',newline='\n') as stream:
+        stream.write(json.dumps(record,indent=2)+'\n')
     print(json.dumps(record))
 
 if __name__=='__main__':main()
