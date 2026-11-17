@@ -2,16 +2,20 @@
 import argparse
 import hashlib
 import json
+import sys
 import zipfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from workbench.common import VERSION
 FOLDERS={'workbench','web','tests','tools','docs','licenses','evidence'}
+TEXT={'.py','.md','.txt','.json','.cmd','.ps1','.js','.mjs','.css','.html','.csv','.svg','.toml','.yml'}
 FILES={'.gitignore','LICENSE','README.md','requirements.txt','requirements.lock.txt','requirements-dev.txt','Start Workbench.cmd'}
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
-    output=args.output or ROOT/'deliverables/Data-Workbench-2.0.1.zip'
+    output=args.output or ROOT/f'deliverables/Data-Workbench-{VERSION}.zip'
     output.parent.mkdir(parents=True,exist_ok=True)
     paths=[]
     for path in ROOT.rglob('*'):
@@ -21,7 +25,14 @@ def main():
             paths.append(path)
         elif relative.as_posix()=='deliverables/Northstar demo package.zip':paths.append(path)
     with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(paths):archive.write(path,Path('data-workbench')/path.relative_to(ROOT))
+        for path in sorted(paths):
+            name=(Path('data-workbench')/path.relative_to(ROOT)).as_posix()
+            if path.suffix.lower() in TEXT or path.name in {'.gitignore','LICENSE'}:
+                # The download targets Windows: use CRLF wherever the release is built.
+                data=path.read_bytes().replace(b'\r\n',b'\n').replace(b'\n',b'\r\n')
+                info=zipfile.ZipInfo(name,date_time=(2026,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
+                archive.writestr(info,data)
+            else:archive.write(path,name)
     record={'filename':output.name,'files':len(paths),'bytes':output.stat().st_size,
             'sha256':hashlib.sha256(output.read_bytes()).hexdigest(),
             'excluded':'Private projects, raw external datasets, environments, caches, local paths, and repository administration.'}

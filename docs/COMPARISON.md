@@ -1,6 +1,6 @@
 # Excel Consolidator and Data Workbench: comparison
 
-This comparison checks where Data Workbench 2.0.0 matches the Excel Consolidator and where their purposes differ. Workbench reproduces the documented sales result and adds configurable related-table preparation. Excel Consolidator remains the native Power Query option for a handoff that does not require Python. Version 2.0.1 retains this behavior; the external benchmark results below identify the 2.0.0 release actually tested.
+This comparison checks where Data Workbench 2.0.0 matches the Excel Consolidator and where their purposes differ. Workbench reproduces the documented sales result and adds configurable related-table preparation. Excel Consolidator remains the native Power Query option for a handoff that does not require Python. Versions 2.0.1 and 2.0.2 retain this behavior; the external benchmark results below identify the 2.0.0 release actually tested.
 
 ## Before and after
 

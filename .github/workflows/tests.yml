@@ -19,3 +19,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -r requirements.lock.txt pytest httpx psutil
       - run: python -B -m pytest tests -q
+  clean-install:
+    # Install the published download exactly as a Windows user would: extract the
+    # zip, run the launcher the Start Workbench shortcut uses, and process the demo.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        id: python
+        with:
+          python-version: '3.12'
+      - name: Verify the release download
+        run: |
+          $zip = Get-ChildItem deliverables/Data-Workbench-*.zip | Select-Object -First 1
+          $record = Get-Content ($zip.FullName -replace '\.zip$', '.json') | ConvertFrom-Json
+          if ((Get-FileHash $zip.FullName -Algorithm SHA256).Hash -ne $record.sha256.ToUpper()) { throw 'Release zip does not match its recorded hash.' }
+          python tools/clean_install_check.py --archive $zip.FullName --workdir "$env:RUNNER_TEMP\clean" --python "${{ steps.python.outputs.python-path }}" --evidence "$env:RUNNER_TEMP\clean\evidence.json"
