@@ -8,8 +8,6 @@ The preparation steps stay visible and repeatable. The app keeps original files,
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
-The separate earlier Excel workbook runs inside Excel with native Power Query. Workbench is the configurable Python application for CSV/XLSX sources and related tables.
-
 ## Open the app
 
 On Windows, install standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/), including its launcher or PATH option. Download and fully extract the ZIP into a writable folder, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. The first launch needs internet access and installs pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
@@ -58,7 +56,7 @@ Use a scratch location outside OneDrive for the generated benchmark data. The be
 
 This independent project includes original fictional demo records. Before using your own data, confirm the mappings, keys, missing-value rules, and what one row represents. The benchmark guides show which cases were checked and where the app needs more care, including scientific numeric precision.
 
-Application code and the fictional demo are covered by [MIT](LICENSE). Runtime dependency notices remain in [licenses](licenses/README.md). External datasets retain their publishers' terms and are not bundled. The earlier Excel workbook remains available for the native Power Query workflow.
+Application code and the fictional demo are covered by [MIT](LICENSE). Runtime dependency notices remain in [licenses](licenses/README.md). External datasets retain their publishers' terms and are not bundled.
 
 ## Benchmark context
 

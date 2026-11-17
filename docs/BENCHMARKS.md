@@ -22,7 +22,7 @@ UCI attribution: Daqing Chen (2015), *Online Retail*, UCI Machine Learning Repos
 
 ## Commands
 
-Examples below use `C:/Temp/WorkbenchBenchmark` for disposable data and a sibling checkout of the preserved Excel project as `<reference-project>`.
+Examples below use `C:/Temp/WorkbenchBenchmark` for disposable data. Commands that pass `<reference-project>` need a private copy of the retired Excel project.
 
 1. Download the Kaggle datasets from their linked pages. Put Superstore at `C:/Temp/WorkbenchBenchmark/inputs/superstore/Sample - Superstore.csv` and the six documented Olist CSVs under `inputs/olist/`. Create `inputs/olist/prior-source-manifest.json` as `{"source_hashes": {"filename.csv": "sha256", ...}}` using the frozen per-file hashes. Do not substitute unrelated Superstore variants.
 2. Fetch public sources and freeze the manifest. The acquisition helper can reuse verified local historical Kaggle copies; an independent reader can supply the same frozen files directly.
@@ -35,6 +35,8 @@ python -B tools/external_benchmark.py --cache C:/Temp/WorkbenchBenchmark/inputs 
 The independent controls use standard-library CSV, openpyxl, explicit date policies, Decimal arithmetic and Python dictionaries for joined totals. They compare each raw field, normalized field, row disposition and lineage reference through ordered hashes, plus exact declared totals. Workbench output never supplies its own expected answer. The helper writes aggregate evidence only; data and database copies stay in the scratch folder. Full processing/export and cached replay are timed separately. Memory is sampled process RSS, not a universal maximum across all possible inputs.
 
 ## Comparable eight-field workload
+
+> The earlier Excel workbook project was retired in November 2026. The comparison results recorded in [COMPARISON.md](COMPARISON.md) are kept as historical evidence, but the commands in this section need a private copy of that project and can no longer be reproduced from a public checkout.
 
 Raw public schemas outside the old eight-field CSV contract are **unsupported by the earlier Excel workbook**, not cleaning failures. The direct comparison uses identical original files and an explicit Superstore projection selecting Row ID, Order ID, Order Date, Ship Date, Category, Region, Product ID and Sales. MDY dates are serialized to the same ISO convention for both tools. No business fields are invented.
 
