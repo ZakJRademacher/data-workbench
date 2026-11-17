@@ -40,6 +40,8 @@ Workbench accepts up to **50 sources, 50 MB each, 250 MB combined, and 1,000,000
 
 ## Implementation and checks
 
+**Real-data regression suite.** Every push runs a slice of four public datasets through the app on Linux and Windows, and every night runs all 1,554,645 rows. Each count, total, join gap and exported value is compared with an [independent reference implementation](realdata/oracle.py) that uses only Python's standard library. Datasets are pinned by URL and SHA-256. [How it works](realdata/README.md).
+
 [Architecture and API](docs/TECHNICAL.md) · [Operating guide](docs/OPERATING_GUIDE.md) · [Verification](docs/QA.md) · [Benchmark reproduction](docs/BENCHMARKS.md) · [Dependency licenses](licenses/README.md)
 
 From the app folder, using an environment with `requirements-dev.txt` installed:

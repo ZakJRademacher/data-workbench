@@ -4,3 +4,5 @@ __pycache__/
 projects/
 *.log
 node_modules/
+.realdata-cache/
+realdata-report.json
