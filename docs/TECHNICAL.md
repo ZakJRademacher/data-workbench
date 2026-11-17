@@ -51,7 +51,7 @@ Decimal and date values are serialized as strings rather than lossy JSON numbers
 - `workbench/engine.py`: normalization, validation, reconciliation, relationship checks, and exports.
 - `workbench/store.py`: project persistence, decisions, jobs, replay, and preview.
 
-The demo's expected counts and totals are specified separately in `workbench/demo.py` and tested against actual outputs. This implementation is separate from Cloud File Intake and does not change its local or AWS paths.
+The demo's expected counts and totals are specified separately in `workbench/demo.py` and tested against actual outputs.
 
 ## Version 2 recipes
 
