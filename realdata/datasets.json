@@ -1,0 +1,50 @@
+{
+  "olist_orders": {
+    "path": "olist/olist_orders_dataset.csv",
+    "url": "https://raw.githubusercontent.com/olist/work-at-olist-data/d9e49802f3e92d09ee94ab9ccc5e457f207a8959/datasets/olist_orders_dataset.csv",
+    "sha256": "8df58ef3d2d7e9944010f7beecd9b75367f5588ec6e3c91cec19ae3345ef9ecf",
+    "bytes": 17654914
+  },
+  "olist_items": {
+    "path": "olist/olist_order_items_dataset.csv",
+    "url": "https://raw.githubusercontent.com/olist/work-at-olist-data/d9e49802f3e92d09ee94ab9ccc5e457f207a8959/datasets/olist_order_items_dataset.csv",
+    "sha256": "4f6abdbbc94036d0df4a76fa0520c072e31a40119d70f7f370fba1e2285d2bcb",
+    "bytes": 15007623
+  },
+  "olist_payments": {
+    "path": "olist/olist_order_payments_dataset.csv",
+    "url": "https://raw.githubusercontent.com/olist/work-at-olist-data/d9e49802f3e92d09ee94ab9ccc5e457f207a8959/datasets/olist_order_payments_dataset.csv",
+    "sha256": "61674868ed7b872aac3dcd95bf774448a88f6426b183f21be55f75af021ffdec",
+    "bytes": 5647783
+  },
+  "olist_customers": {
+    "path": "olist/olist_customers_dataset.csv",
+    "url": "https://raw.githubusercontent.com/olist/work-at-olist-data/d9e49802f3e92d09ee94ab9ccc5e457f207a8959/datasets/olist_customers_dataset.csv",
+    "sha256": "c26c17f59f3027a6a0dbeb8f1fa373c38f3323ecc84f225a8f4820e5bb288df8",
+    "bytes": 8562270
+  },
+  "olist_products": {
+    "path": "olist/olist_products_dataset.csv",
+    "url": "https://raw.githubusercontent.com/olist/work-at-olist-data/d9e49802f3e92d09ee94ab9ccc5e457f207a8959/datasets/olist_products_dataset.csv",
+    "sha256": "3e6569628a17fbc75fd206ee357b59e20364b9afa90f5b6cd5b4d624c58aa9cc",
+    "bytes": 2379446
+  },
+  "online_retail": {
+    "path": "retail/online-retail.csv",
+    "url": "https://raw.githubusercontent.com/databricks/Spark-The-Definitive-Guide/4ba5601eb9b9aed1d01ab79775e3af228216ff6f/data/retail-data/all/online-retail-dataset.csv",
+    "sha256": "a2f79bbdd4463df6db8a3f5a50b9c980ae8f645a370bf5e2c0d6097f9e817b05",
+    "bytes": 45038760
+  },
+  "airport_codes": {
+    "path": "airports/airport-codes.csv",
+    "url": "https://raw.githubusercontent.com/datasets/airport-codes/0ebaf2a8ab955eb542f84b7b5960ecf563f64edc/data/airport-codes.csv",
+    "sha256": "b13058a39d558e7787795436c8b0a3d3eb56c1d93dd48082dec960d31cc14cf4",
+    "bytes": 8826617
+  },
+  "nycflights13": {
+    "path": "flights/nycflights13-0.0.3.tar.gz",
+    "url": "https://files.pythonhosted.org/packages/a1/6a/ce6fe2de399a54e1fc4c4b60c61987854974b936bab6d0f6444bc76939db/nycflights13-0.0.3.tar.gz",
+    "sha256": "d9ef2f5cf1bebca7e30b4daf69dcd7a8fd71f25b7196f5dc489879ad7e3e8a37",
+    "bytes": null
+  }
+}

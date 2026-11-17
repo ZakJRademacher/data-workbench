@@ -1,0 +1,44 @@
+name: Real-data regression
+# Public datasets run through the workbench and checked against an independent
+# oracle (realdata/oracle.py). A slice runs on every push; every row runs nightly.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 7 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: sample (a slice of each dataset) or full (every row)
+        type: choice
+        options: [full, sample]
+        default: full
+permissions:
+  contents: read
+jobs:
+  realdata:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      REALDATA_MODE: ${{ github.event_name == 'schedule' && 'full' || inputs.mode || 'sample' }}
+      REALDATA_CACHE: .realdata-cache
+      REALDATA_REPORT: realdata-report.json
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.lock.txt pytest
+      - name: Download pinned datasets and verify their hashes
+        run: python -m realdata.fetch --cache .realdata-cache
+      - name: Compare the workbench with the independent oracle
+        run: python -B -m pytest realdata -q -p no:cacheprovider
+      - name: Report
+        if: always()
+        run: python -c "import pathlib; p=pathlib.Path('realdata-report.json'); print(p.read_text() if p.exists() else 'No report written.')"
