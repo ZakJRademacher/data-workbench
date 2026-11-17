@@ -13,7 +13,7 @@ def write_workbook(con, recipe, manifest, path):
     book = Workbook(write_only=True)
     book.properties.creator = "Zak Rademacher"
     book.properties.lastModifiedBy = "Zak Rademacher"
-    book.properties.title = "Data Workbench Â· Project review"
+    book.properties.title = "Data Workbench · Project review"
     book.properties.description = "Source reconciliation and labeled previews. Complete records are in the accompanying CSV files."
 
     def sheet(title, headers, rows, note):

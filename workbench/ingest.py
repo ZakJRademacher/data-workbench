@@ -27,13 +27,29 @@ def text(value):
     return str(value)
 
 
+def is_utf8(path, chunk=1024 * 1024):
+    """Check the whole file, so a non-UTF-8 byte deep inside is not missed."""
+    decoder = codecs.getincrementaldecoder("utf-8-sig")()
+    try:
+        with open(path, "rb") as stream:
+            while block := stream.read(chunk):
+                decoder.decode(block, final=False)
+            decoder.decode(b"", final=True)
+    except UnicodeDecodeError:
+        return False
+    return True
+
+
 def csv_settings(path):
     raw = Path(path).read_bytes()[:128 * 1024]
-    try:
-        encoding = "utf-16" if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else "utf-8-sig"
+    if raw.startswith((b'\xff\xfe', b'\xfe\xff')):
+        encoding = "utf-16"
         sample = codecs.getincrementaldecoder(encoding)().decode(raw, final=False)
-    except UnicodeDecodeError:
-        sample, encoding = raw.decode("cp1252"), "cp1252"
+    elif is_utf8(path):
+        encoding = "utf-8-sig"
+        sample = codecs.getincrementaldecoder(encoding)().decode(raw, final=False)
+    else:
+        sample, encoding = raw.decode("cp1252", errors="replace"), "cp1252"
     try:
         delimiter = csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
     except csv.Error:
@@ -144,6 +160,10 @@ def _inspect(path, filename, source_id, settings=None):
 def inspect(path, filename, source_id, settings=None):
     try:
         return _inspect(path, filename, source_id, settings)
+    except UnicodeDecodeError as exc:
+        chosen = (settings or {}).get("encoding", "the detected encoding")
+        other = "Windows-1252 (cp1252)" if chosen != "cp1252" else "UTF-8"
+        raise WorkbenchError(f"{filename} is not valid {chosen} text. Choose {other} as the encoding in this source's settings.") from exc
     except (BadZipFile, InvalidFileException, ParseError, csv.Error, UnicodeError, OSError) as exc:
         raise WorkbenchError(f"Cannot inspect {filename}: {exc}. Check the file format, encoding, and workbook integrity.") from exc
 
@@ -154,65 +174,79 @@ def iter_records(path, source, expected_headers):
     header_row = settings["header_row"]
     filename = source["filename"]
     if Path(filename).suffix.lower() == ".csv":
-        with open(path, encoding=settings["encoding"], newline="") as stream:
-            rows = csv.reader(stream, delimiter=settings["delimiter"], strict=True)
-            for number, values in enumerate(rows, 1):
-                if settings.get('end_row') is not None and number > settings['end_row']:
-                    break
-                if number < header_row:
-                    continue
-                if number == header_row:
-                    if headers_from(values) != expected_headers:
-                        raise WorkbenchError("Source headings changed; inspect and map this file again.")
-                    continue
-                if not values:
-                    continue
-                if len(values) != len(expected_headers):
-                    raise WorkbenchError(f"Record {number} has {len(values)} fields; expected {len(expected_headers)}. No rows from this file were accepted.")
-                yield number, values, "", {}
-    else:
-        values_book = load_workbook(path, read_only=True, data_only=True, keep_links=False)
-        formula_book = load_workbook(path, read_only=True, data_only=False, keep_links=False)
         try:
-            sheet = settings["sheet"]
-            if sheet not in values_book.sheetnames:
-                raise WorkbenchError("Selected worksheet is missing.")
-            values_book[sheet].reset_dimensions()
-            formula_book[sheet].reset_dimensions()
-            pairs = zip(values_book[sheet].iter_rows(), formula_book[sheet].iter_rows())
-            for number, (cells, formula_cells) in enumerate(pairs, 1):
-                if settings.get('end_row') is not None and number > settings['end_row']:
-                    break
-                values = [text(c.value) for c in cells]
-                if number < header_row:
-                    continue
-                if number == header_row:
-                    if headers_from(values) != expected_headers:
-                        raise WorkbenchError("Source headings changed; inspect and map this file again.")
-                    continue
-                formulas = [c for c in formula_cells if c.data_type == "f"]
-                if not any(values) and not formulas:
-                    continue
-                if any(values[len(expected_headers):]):
-                    raise WorkbenchError(f"Worksheet row {number} contains values beyond the mapped headings.")
-                values = (values + [""] * len(expected_headers))[:len(expected_headers)]
-                issues = []
-                provenance = {}
-                for i, cell in enumerate(formula_cells[:len(expected_headers)]):
-                    if cell.data_type == "f":
-                        provenance[expected_headers[i]] = {"formula": cell.value, "cached_value": values[i], "freshness_verified": False}
-                    if cell.data_type == "f" and not values[i]:
-                        issues.append(f"Missing cached formula result: {expected_headers[i]}")
-                    elif cell.data_type == "e":
-                        issues.append(f"Excel cell error: {expected_headers[i]}")
-                    elif isinstance(cell.value, (int, float)) and re.fullmatch(r"0{2,}", cell.number_format or ""):
-                        # Excel stores this as a number but displays a padded identifier.
-                        provenance[expected_headers[i]] = {"stored_value": text(cell.value), "number_format": cell.number_format}
-                        values[i] = str(int(cell.value)).zfill(len(cell.number_format)) if float(cell.value).is_integer() else values[i]
-                yield number, values, "; ".join(issues), provenance
-        finally:
-            values_book.close()
-            formula_book.close()
+            yield from _csv_records(path, settings, header_row, expected_headers)
+        except UnicodeDecodeError as exc:
+            other = "Windows-1252 (cp1252)" if settings["encoding"] != "cp1252" else "UTF-8"
+            raise WorkbenchError(
+                f"{filename} is not valid {settings['encoding']} text (byte {exc.object[exc.start:exc.start + 1]!r}). "
+                f"Choose {other} as the encoding in this source's settings. No rows from this file were accepted.") from exc
+    else:
+        yield from _excel_records(path, settings, header_row, expected_headers)
+
+
+def _csv_records(path, settings, header_row, expected_headers):
+    with open(path, encoding=settings["encoding"], newline="") as stream:
+        rows = csv.reader(stream, delimiter=settings["delimiter"], strict=True)
+        for number, values in enumerate(rows, 1):
+            if settings.get('end_row') is not None and number > settings['end_row']:
+                break
+            if number < header_row:
+                continue
+            if number == header_row:
+                if headers_from(values) != expected_headers:
+                    raise WorkbenchError("Source headings changed; inspect and map this file again.")
+                continue
+            if not values:
+                continue
+            if len(values) != len(expected_headers):
+                raise WorkbenchError(f"Record {number} has {len(values)} fields; expected {len(expected_headers)}. No rows from this file were accepted.")
+            yield number, values, "", {}
+
+
+def _excel_records(path, settings, header_row, expected_headers):
+    values_book = load_workbook(path, read_only=True, data_only=True, keep_links=False)
+    formula_book = load_workbook(path, read_only=True, data_only=False, keep_links=False)
+    try:
+        sheet = settings["sheet"]
+        if sheet not in values_book.sheetnames:
+            raise WorkbenchError("Selected worksheet is missing.")
+        values_book[sheet].reset_dimensions()
+        formula_book[sheet].reset_dimensions()
+        pairs = zip(values_book[sheet].iter_rows(), formula_book[sheet].iter_rows())
+        for number, (cells, formula_cells) in enumerate(pairs, 1):
+            if settings.get('end_row') is not None and number > settings['end_row']:
+                break
+            values = [text(c.value) for c in cells]
+            if number < header_row:
+                continue
+            if number == header_row:
+                if headers_from(values) != expected_headers:
+                    raise WorkbenchError("Source headings changed; inspect and map this file again.")
+                continue
+            formulas = [c for c in formula_cells if c.data_type == "f"]
+            if not any(values) and not formulas:
+                continue
+            if any(values[len(expected_headers):]):
+                raise WorkbenchError(f"Worksheet row {number} contains values beyond the mapped headings.")
+            values = (values + [""] * len(expected_headers))[:len(expected_headers)]
+            issues = []
+            provenance = {}
+            for i, cell in enumerate(formula_cells[:len(expected_headers)]):
+                if cell.data_type == "f":
+                    provenance[expected_headers[i]] = {"formula": cell.value, "cached_value": values[i], "freshness_verified": False}
+                if cell.data_type == "f" and not values[i]:
+                    issues.append(f"Missing cached formula result: {expected_headers[i]}")
+                elif cell.data_type == "e":
+                    issues.append(f"Excel cell error: {expected_headers[i]}")
+                elif isinstance(cell.value, (int, float)) and re.fullmatch(r"0{2,}", cell.number_format or ""):
+                    # Excel stores this as a number but displays a padded identifier.
+                    provenance[expected_headers[i]] = {"stored_value": text(cell.value), "number_format": cell.number_format}
+                    values[i] = str(int(cell.value)).zfill(len(cell.number_format)) if float(cell.value).is_integer() else values[i]
+            yield number, values, "; ".join(issues), provenance
+    finally:
+        values_book.close()
+        formula_book.close()
 
 
 def stage_source(path, source, mapping, output, field_names, row_limit):

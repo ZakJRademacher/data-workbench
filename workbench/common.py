@@ -79,7 +79,32 @@ def runtime_root():
 
 
 def safe_text(value):
-    """Make spreadsheet formula-looking strings inert, without changing numbers."""
+    """Make spreadsheet formula-looking strings inert, without changing numbers.
+
+    Used for the review workbook, which is opened in a spreadsheet by design.
+    """
     if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + value
+    return value
+
+
+# Plain data that merely starts with a sign: numbers, coordinates, phone numbers,
+# ranges. Without letters or formula operators like | ! = it cannot call a function.
+PLAIN_SIGNED = re.compile(r"[+-][0-9 .,()/:+-]*")
+
+
+def csv_safe_text(value):
+    """Escape CSV text only when a spreadsheet could run it as a formula.
+
+    CSV exports are data, so values such as "-67.5, -68.1" or "+44 20 7946 0000"
+    stay exactly as recorded. Anything that could start a formula or DDE call
+    (=..., @..., +cmd|..., -2+3+cmd|...) is still prefixed with an apostrophe.
+    """
+    if not isinstance(value, str):
+        return value
+    text = value.lstrip()
+    if text.startswith(("=", "@", "\t", "\r")):
+        return "'" + value
+    if text.startswith(("+", "-")) and not PLAIN_SIGNED.fullmatch(text):
         return "'" + value
     return value

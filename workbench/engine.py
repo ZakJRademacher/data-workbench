@@ -8,7 +8,7 @@ from pathlib import Path
 
 import duckdb
 
-from .common import MAX_ROWS, VERSION, WorkbenchError, dumps, file_hash, lit, now, q, safe_text, write_json
+from .common import MAX_ROWS, VERSION, WorkbenchError, csv_safe_text, dumps, file_hash, lit, now, q, write_json
 from .ingest import META, stage_source
 from .recipe import validate
 
@@ -28,8 +28,13 @@ def field_expr(field, original):
     if kind == "text":
         return raw, "FALSE"
     if kind == "date":
-        value = f"try_strptime({raw}, {lit(field.get('date_format', '%Y-%m-%d'))})::DATE"
-        width_check = f" OR strftime({value}, {lit(field.get('date_format', '%Y-%m-%d'))}) != {raw}" if field.get('date_exact', True) else ''
+        fmt = lit(field.get('date_format', '%Y-%m-%d'))
+        # Excel date cells arrive as ISO timestamps at midnight (2026-01-03T00:00:00).
+        # A midnight time carries no information, so accept it as that date whatever
+        # format was chosen for text dates; any other time of day still goes to review.
+        midnight = f"regexp_full_match({raw}, {lit('[0-9]{4}-[0-9]{2}-[0-9]{2}[T ]00:00(?::00(?:[.]0+)?)?')})"
+        value = f"(CASE WHEN {midnight} THEN try_strptime(left({raw}, 10), '%Y-%m-%d') ELSE try_strptime({raw}, {fmt}) END)::DATE"
+        width_check = f" OR (NOT {midnight} AND strftime({value}, {fmt}) != {raw})" if field.get('date_exact', True) else ''
         return value, f"({raw} IS NOT NULL AND ({value} IS NULL{width_check}))"
     value = raw
     for symbol in field.get("strip_symbols", ""):
@@ -61,13 +66,18 @@ def field_expr(field, original):
 
 
 def export_csv(connection, query, path):
+    """Write a CSV; return how many formula-like text cells were escaped."""
     cursor = connection.execute(query)
     columns = [d[0] for d in cursor.description]
+    escaped = 0
     with open(path, "w", encoding="utf-8-sig", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(columns)
         while rows := cursor.fetchmany(5000):
-            writer.writerows([[safe_text(v) for v in row] for row in rows])
+            safe_rows = [[csv_safe_text(v) for v in row] for row in rows]
+            escaped += sum(a is not b for row, safe in zip(rows, safe_rows) for a, b in zip(row, safe))
+            writer.writerows(safe_rows)
+    return escaped
 
 
 def process(recipe, sources, raw_root, decisions, runtime, output, progress=lambda *_: None):
@@ -79,7 +89,7 @@ def process(recipe, sources, raw_root, decisions, runtime, output, progress=lamb
     con = duckdb.connect(str(database), config={"memory_limit": "1GB", "threads": "2", "enable_external_access": "true"})
     con.execute(f"SET temp_directory={lit(str(runtime / 'spill'))}")
     manifest = {"engine_version": VERSION, "started": now(), "file_issues": [], "tables": [], "views": [],
-                "relationship_suggestions": [], "profiles": [], "sources": [{k: s[k] for k in ("id", "filename", "sha256", "settings")} for s in sources]}
+                "relationship_suggestions": [], "profiles": [], "csv_escaped_cells": {}, "sources": [{k: s[k] for k in ("id", "filename", "sha256", "settings")} for s in sources]}
     total = 0
     try:
         con.execute("CREATE TABLE decisions(record_id VARCHAR, corrections JSON, excluded BOOLEAN)")
@@ -187,21 +197,23 @@ def process(recipe, sources, raw_root, decisions, runtime, output, progress=lamb
                     profile["outlier_method"] = "Outside 1.5 × IQR among accepted values; diagnostic only, no exclusion or imputation."
                 manifest["profiles"].append(profile)
             manifest["tables"][-1]["formula_rows"] = con.execute(f"SELECT count(*) FROM {q('result_' + name)} WHERE contains(__formulas, '\"formula\":')").fetchone()[0]
-            export_csv(con, f"SELECT * FROM {q(name)} ORDER BY __source_name,__row::BIGINT", output / f"{name}.csv")
+            escaped = manifest["csv_escaped_cells"]
+            escaped[f"{name}.csv"] = export_csv(con, f"SELECT * FROM {q(name)} ORDER BY __source_name,__row::BIGINT", output / f"{name}.csv")
             for status in ("review", "excluded"):
-                export_csv(con, f"SELECT {','.join(q(n) for n in names + META)}, __issues, __status FROM {q('result_' + name)} WHERE __status={lit(status)} ORDER BY __source_name,__row::BIGINT", output / f"{name}-{status}.csv")
+                escaped[f"{name}-{status}.csv"] = export_csv(con, f"SELECT {','.join(q(n) for n in names + META)}, __issues, __status FROM {q('result_' + name)} WHERE __status={lit(status)} ORDER BY __source_name,__row::BIGINT", output / f"{name}-{status}.csv")
             for prefix in ("raw_", "corrected_", "typed_", "marked_", "groups_", "keys_"):
                 con.execute(f"DROP TABLE IF EXISTS {q(prefix + name)}")
         progress("Checking relationships", 65)
         manifest["relationship_suggestions"] = suggest_relationships(con, recipe)
         for view in recipe.get("views", []):
             manifest["views"].append(build_view(con, recipe, view, output=output))
-            export_csv(con, f"SELECT * FROM {q(view['name'])}", output / (view["name"] + ".csv"))
-        export_csv(con, " UNION ALL ".join(f"SELECT {lit(t['name'])} AS table_name, __source_id, __source_name, __sheet, __row, __record_id, __raw, __formulas, to_json(struct_pack({','.join(q(f['name']) + ' := ' + q(f['name']) for f in t['fields'])})) AS cleaned_values, __issues, __status FROM {q('result_' + t['name'])}" for t in recipe["tables"]), output / "audit.csv")
+            manifest["csv_escaped_cells"][view["name"] + ".csv"] = export_csv(con, f"SELECT * FROM {q(view['name'])}", output / (view["name"] + ".csv"))
+        manifest["csv_escaped_cells"]["audit.csv"] = export_csv(con, " UNION ALL ".join(f"SELECT {lit(t['name'])} AS table_name, __source_id, __source_name, __sheet, __row, __record_id, __raw, __formulas, to_json(struct_pack({','.join(q(f['name']) + ' := ' + q(f['name']) for f in t['fields'])})) AS cleaned_values, __issues, __status FROM {q('result_' + t['name'])}" for t in recipe["tables"]), output / "audit.csv")
         dictionary = [{"table": t["name"], **f} for t in recipe["tables"] for f in t["fields"]]
         write_json(output / "data-dictionary.json", dictionary)
         write_json(output / "recipe.json", recipe)
         write_json(output / "decisions.json", decisions)
+        manifest["csv_escaped_cells"] = {k: v for k, v in manifest["csv_escaped_cells"].items() if v}
         manifest["input_rows"] = total
         manifest["complete_inputs"] = not manifest["file_issues"]
         manifest["review_rows"] = sum(t["review"] for t in manifest["tables"])
