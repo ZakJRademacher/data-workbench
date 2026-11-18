@@ -42,6 +42,10 @@ REALDATA_MODE=full python -B -m pytest realdata -q         # every row
 
 On Windows PowerShell, set the mode with `$env:REALDATA_MODE = "full"`. Set `REALDATA_REPORT=report.json` to write row counts and timings per case.
 
+## Match feasibility
+
+`python -m realdata.match_feasibility` measures how often payments can be matched to orders without a shared ID on the Olist data, scoring correct, wrong, ambiguous and unmatched outcomes. Its results set the matching rules in [the reconciliation design](../docs/RECONCILIATION_DESIGN.md#52-evidence-amount-and-date-are-not-enough).
+
 ## Adding a case
 
 Add the file to `datasets.json` with its pinned URL and hash, compute the expected results in `oracle.py` from the raw file without using the workbench, then add a test in `test_realdata.py` that runs the workbench and compares the two. Before relying on a new test, confirm that it fails when the behaviour it guards is broken.
