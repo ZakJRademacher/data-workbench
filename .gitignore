@@ -6,3 +6,4 @@ projects/
 node_modules/
 .realdata-cache/
 realdata-report.json
+ai-eval.json
