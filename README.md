@@ -38,6 +38,17 @@ There are two conflicting customer copies, one ambiguous order date, one invalid
 
 Workbench accepts up to **50 sources, 50 MB each, 250 MB combined, and 1,000,000 parsed input rows**, with one processing job at a time. It reads CSV and one selected `.xlsx` sheet per source. Formula values depend on workbook caches; dates need an explicit format. It does not infer currencies, merge similar entities, or recalculate Excel formulas. File errors mark a project incomplete, even when readable sources produce partial outputs. [Complete input, precision, review, and storage limits](docs/OPERATING_GUIDE.md#limits-and-interpretation).
 
+## AI-suggested recipes (this branch only)
+
+This `feature/ai-suggestions` branch adds an optional step that asks Claude to propose a cleaning recipe for new sources: field types, missing-value markers, date formats, keys, duplicate policies and relationships, each with a reason. The released app on `main` doesn't include it.
+
+- **What the model sees:** each source's headings and at most 20 sample rows, never the full file. Data leaves the machine only when `workbench.ai_suggest.suggest()` is called.
+- **What it can change:** only what the recipe validator accepts. Invalid suggestions are dropped and listed, and relationships are never approved automatically. A wrong guess sends records to review; it can't change a published value.
+- **How it's measured:** `realdata/ai_eval.py` scores the AI's recipe and the built-in rule-based recipe against the reference recipes of the real-data suite (field types, keys, joins, records held for review, totals). It runs in CI with an `ANTHROPIC_API_KEY` repository secret, about $1-2 per run.
+- **Tests:** `tests/test_ai_suggest.py` uses a fake model client, so it needs no key.
+
+It needs the optional `anthropic` package: `pip install anthropic`.
+
 ## Implementation and checks
 
 **Real-data regression suite.** Every push runs a slice of four public datasets through the app on Linux and Windows, and every night runs all 1,554,645 rows. Each count, total, join gap and exported value is compared with an [independent reference implementation](realdata/oracle.py) that uses only Python's standard library. Datasets are pinned by URL and SHA-256. [How it works](realdata/README.md).
