@@ -1,0 +1,15 @@
+{
+  "name": "QuickBooks Online transaction detail",
+  "description": "Transaction Detail by Account (or similar) report for the bank account, exported to CSV or Excel. Title rows, account group rows and total rows are skipped.",
+  "record": "deposit",
+  "fields": {
+    "date": {"columns": ["Date", "Transaction Date"], "type": "date", "formats": ["%m/%d/%Y", "%Y-%m-%d"], "required": true},
+    "type": {"columns": ["Transaction Type", "Type"], "required": true},
+    "num": {"columns": ["Num", "No."]},
+    "name": {"columns": ["Name"]},
+    "memo": {"columns": ["Memo/Description", "Memo", "Description"]},
+    "amount": {"columns": ["Amount"], "type": "money", "required": true}
+  },
+  "keep": {"field": "type", "values": ["Deposit"]},
+  "verify": "Layout modeled on QuickBooks Online report exports; confirm column names and the Deposit transaction type against a client's export."
+}
