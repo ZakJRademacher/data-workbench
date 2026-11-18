@@ -1,0 +1,14 @@
+{
+  "name": "Stripe payouts",
+  "description": "Payouts list exported from the Stripe Dashboard (Balances > Payouts > Export). One row per payout.",
+  "record": "payout",
+  "fields": {
+    "payout_id": {"columns": ["id", "Payout ID", "payout_id"], "required": true},
+    "amount": {"columns": ["Amount", "amount"], "type": "money", "required": true},
+    "arrival": {"columns": ["Arrival Date", "arrival_date", "Arrival Date (UTC)"], "type": "date",
+                "formats": ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"], "required": true},
+    "currency": {"columns": ["Currency", "currency"], "required": true},
+    "status": {"columns": ["Status", "status"]}
+  },
+  "verify": "Column names follow Stripe's report conventions; confirm against a real export before relying on this profile."
+}

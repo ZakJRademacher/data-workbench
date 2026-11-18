@@ -1,0 +1,18 @@
+{
+  "name": "Stripe itemized payout reconciliation",
+  "description": "Report type payout_reconciliation.itemized: one row per balance transaction settled by an automatic payout.",
+  "record": "transaction",
+  "fields": {
+    "transaction_id": {"columns": ["balance_transaction_id"], "required": true},
+    "payout_id": {"columns": ["automatic_payout_id"], "required": true},
+    "payout_effective": {"columns": ["automatic_payout_effective_at", "automatic_payout_effective_at_utc"], "type": "date",
+                         "formats": ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]},
+    "category": {"columns": ["reporting_category"], "required": true},
+    "gross": {"columns": ["gross"], "type": "money", "required": true},
+    "fee": {"columns": ["fee"], "type": "money", "required": true},
+    "net": {"columns": ["net"], "type": "money", "required": true},
+    "currency": {"columns": ["currency"], "required": true},
+    "created": {"columns": ["created_utc", "created"], "type": "date", "formats": ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]}
+  },
+  "verify": "balance_transaction_id, reporting_category, automatic_payout_id and automatic_payout_effective_at are documented by Stripe; the money and date column names are the report's defaults and are customizable."
+}

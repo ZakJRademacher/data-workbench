@@ -1,6 +1,6 @@
 # Design: payment reconciliation for small businesses
 
-**Status:** proposal · **Builds on:** the Data Workbench engine (ingest, cleaning rules, review queue, audit, hash manifest)
+**Status:** phase 1 built ([results](#phase-1-status)) · **Builds on:** the Data Workbench engine (ingest, cleaning rules, review queue, audit, hash manifest)
 
 ## Summary
 
@@ -195,3 +195,36 @@ The engine's existing pieces are reused unchanged: ingest and header detection, 
 - **Time zones.** Store-local and UTC dates disagree near midnight. The date window absorbs this, but tie-out period boundaries must use one declared time zone.
 - **Scope creep into accounting.** The tool explains differences; it doesn't decide how to book them. Suggested actions stay suggestions.
 - **Open:** whether to support Shopify Payments before Stripe in phase 1. That depends on which the first clients use.
+
+## Phase 1 status
+
+Built in `workbench/recon/`: Stripe payouts against QuickBooks deposits, and payout arithmetic.
+
+```
+python -m workbench.recon --payouts stripe_payouts.csv --itemized stripe_itemized.csv \
+    --books quickbooks.csv --period 2026-10 --out recon-2026-10
+```
+
+It writes `summary.md` (the tie-out and everything needing attention, each naming its payout or books row), `matches.csv` (each match with its rule and evidence), `exceptions.csv` and `result.json` (with SHA-256 hashes of the inputs). `python -m workbench.recon.synth --out demo` writes a sample store's three exports to try it on.
+
+**Rules, in order:** payout ID in the deposit; same amount + deposit within −1/+5 days + deposit names the processor, unique on both sides; 2–4 consecutive payouts summing to one processor deposit. Everything else with a candidate goes to review.
+
+**Measured on synthetic stores with known truth** (`tests/test_recon.py` runs a subset on every push):
+
+| | Normal fault rates | Hostile fault rates |
+|---|---:|---:|
+| Stores / payouts | 300 / 6,596 | 150 / 3,299 |
+| **Wrong automatic matches** | **0** | **0** |
+| Injected faults missed | 0 of 794 | 0 of 978 |
+| Payout arithmetic faults caught | 125 / 125, 0 false | 329 / 329, 0 false |
+| Duplicate deposits flagged | 88 / 88, 0 false | 164 / 164, 0 false |
+| Payouts matched automatically | 83.7% | 54.9% |
+| Payouts sent to review | 5.0% | 23.6% |
+
+What the evaluation changed during the build:
+
+- **Duplicates of last month's bookings.** The first run made 7 wrong matches in 6,596 payouts, all the same case: a payout that arrived on the last day of September, booked in September and booked again on October 1. October's books alone can't tell that apart from a legitimate first booking. Deposits that fit a payout from before the period now become an `EARLIER_PAYOUT` item to confirm instead of a match; carrying state between periods (phase 3) will resolve these automatically.
+- **Duplicate detection without false alarms.** Flagging any leftover deposit with the exact amount of a matched or reviewed payout caught every duplicate but raised 413 false flags on other income deliberately given colliding amounts. Restricting it to deposits with no named payer kept every true duplicate and removed every false flag.
+- **Two faults on one payout.** When a gross booking coincides with an incomplete itemized export, the gross amount can't be computed; the payout is still flagged, as not deposited plus an arithmetic fault. The evaluation counts these separately (1 normal, 6 hostile).
+
+**Limits:** the synthetic exports follow the documented layouts, but real Stripe and QuickBooks exports must be checked against the profiles before relying on them; bank holidays aren't modelled; one currency per run.
