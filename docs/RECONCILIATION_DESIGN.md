@@ -151,7 +151,7 @@ If a reconciling item can't be backed by records, it is listed as unexplained ra
 
 ## 8. Proving it's correct
 
-The same discipline as the [real-data regression suite](../realdata/README.md): results are checked against an independent oracle and pinned data, on every push.
+The same discipline as the [real-data regression suite](https://github.com/ZakJRademacher/data-workbench/tree/main/realdata): results are checked against an independent oracle and pinned data, on every push.
 
 1. **Synthetic stores with known truth.** A generator writes Shopify, Stripe and QuickBooks exports in each profile's format from a known ledger, then injects realistic faults: missing rows, late charges, partial refunds, split tenders, combined deposits, typos in references, colliding amounts. Since the truth is known, every match and exception is scored. **Acceptance bar: zero wrong automatic matches; every injected fault surfaces as the right exception code.**
 2. **Real-data blind matching.** The Olist measurement in §5.2 joins the regression suite, so a rule change that adds even one wrong match on real data fails the build.
