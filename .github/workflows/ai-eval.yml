@@ -1,0 +1,32 @@
+name: AI suggestion eval
+# On demand only: scores AI-suggested recipes against the reference recipes on
+# real data (realdata/ai_eval.py). Needs the ANTHROPIC_API_KEY repository secret;
+# each run makes four Claude API calls.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ai-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Check for an API key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -c "import os, sys; sys.exit(0 if os.environ.get('ANTHROPIC_API_KEY') else 'Add an ANTHROPIC_API_KEY repository secret to run this eval.')"
+      - run: python -m pip install -r requirements.lock.txt "anthropic>=2,<3"
+      - run: python -m realdata.fetch --cache .realdata-cache
+      - name: Score AI suggestions against the reference recipes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -B -m realdata.ai_eval --cache .realdata-cache --out ai-eval.json
+      - name: Full report
+        if: always()
+        run: python -c "import pathlib; p=pathlib.Path('ai-eval.json'); print(p.read_text() if p.exists() else 'No report written.')"
