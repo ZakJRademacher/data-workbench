@@ -4,7 +4,7 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[View the workspace](docs/images/review-2.0.1.png) · [Download version 2.0.2](https://github.com/ZakJRademacher/data-workbench/raw/refs/heads/main/deliverables/Data-Workbench-2.0.2.zip) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[Download for Windows (2.1.0)](https://github.com/ZakJRademacher/data-workbench/raw/refs/heads/main/deliverables/Data-Workbench-2.1.0.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
@@ -12,7 +12,7 @@ The preparation steps stay visible and repeatable. The app keeps original files,
 
 On Windows, install standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/), including its launcher or PATH option. Download and fully extract the ZIP into a writable folder, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. The first launch needs internet access and installs pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
 
-The launcher and extracted download were tested with a separate Python 3.13.9 installation. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`; the double-click launcher was verified on Windows only.
+The Windows clean-install check extracts the download, starts the launcher with Python 3.12, and runs the built-in demo. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`.
 
 Choose **Explore the demo** for a fictional customer, order, and payment project, or **Create a project** to add your own files.
 
@@ -34,13 +34,27 @@ The first run has **20 input records = 14 accepted + 6 needing review**. Accepte
 
 There are two conflicting customer copies, one ambiguous order date, one invalid amount, and two copies of the same order. The fixtures are original fictional data, with no assumed currency. See [the operating guide](docs/OPERATING_GUIDE.md) for the demo walkthrough and expected results.
 
+## Try payout reconciliation
+
+Version 2.1.0 includes a command-line preview that matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. The preview was tested on synthetic exports. Verify the source profiles against your own export layouts before relying on the results.
+
+After the first Windows launch, open PowerShell in the extracted `data-workbench` folder. These commands use the environment set up by the launcher:
+
+```powershell
+$workbenchPython = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv\Scripts\python.exe'
+& $workbenchPython -X utf8 -m workbench.recon.synth --out recon-demo
+& $workbenchPython -X utf8 -m workbench.recon --payouts recon-demo/stripe_payouts.csv --itemized recon-demo/stripe_itemized.csv --books recon-demo/quickbooks.csv --period 2026-10 --out recon-results
+```
+
+Open `recon-results/summary.md` to read the tie-out and review items. [Matching rules, test evidence, and limits](docs/RECONCILIATION_DESIGN.md#phase-1-status).
+
 ## Limits and interpretation
 
 Workbench accepts up to **50 sources, 50 MB each, 250 MB combined, and 1,000,000 parsed input rows**, with one processing job at a time. It reads CSV and one selected `.xlsx` sheet per source. Formula values depend on workbook caches; dates need an explicit format. It does not infer currencies, merge similar entities, or recalculate Excel formulas. File errors mark a project incomplete, even when readable sources produce partial outputs. [Complete input, precision, review, and storage limits](docs/OPERATING_GUIDE.md#limits-and-interpretation).
 
 ## Implementation and checks
 
-**Real-data regression suite.** Every push runs a slice of four public datasets through the app on Linux and Windows, and every night runs all 1,554,645 rows. Each count, total, join gap and exported value is compared with an [independent reference implementation](realdata/oracle.py) that uses only Python's standard library. Datasets are pinned by URL and SHA-256. [How it works](realdata/README.md).
+**Real-data regression suite.** Every push runs a slice of four public datasets through the app on Linux and Windows, and every night runs all 1,554,645 rows. Each count, total, join gap and exported value is compared with an [independent reference implementation](https://github.com/ZakJRademacher/data-workbench/blob/main/realdata/oracle.py) that uses only Python's standard library. Datasets are pinned by URL and SHA-256. [How it works](https://github.com/ZakJRademacher/data-workbench/tree/main/realdata).
 
 [Architecture and API](docs/TECHNICAL.md) · [Operating guide](docs/OPERATING_GUIDE.md) · [Verification](docs/QA.md) · [Benchmark reproduction](docs/BENCHMARKS.md) · [Dependency licenses](licenses/README.md)
 
