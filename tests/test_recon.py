@@ -283,3 +283,56 @@ def test_a_payout_export_that_disagrees_with_the_prior_close_is_flagged(tmp_path
                            tmp_path / 'sep' / 'close-state.json')
     assert [(e['code'], e['payouts']) for e in octo['exceptions']] == [('PRIOR_CLOSE_MISMATCH', ['po_LOSTAAAA'])]
     assert '$250.00' in octo['exceptions'][0]['detail'] and '$205.00' in octo['exceptions'][0]['detail']
+
+
+# --- Phase 2 rules ------------------------------------------------------------------------
+
+def _order(name, amount='50.00', day=5, **evidence):
+    return {'order_id': name, 'source': f'orders:{name}', 'date': date(2026, 10, day), 'amount': D(amount),
+            'currency': 'USD', **evidence}
+
+
+def _txn(n, kind='charge', amount='50.00', day=5, **fields):
+    return {'source': f'txns:{n}', 'transaction_id': f'txn_{n}', 'kind': kind, 'amount': D(amount),
+            'currency': 'USD', 'date': date(2026, 10, day), **fields}
+
+
+def test_a_dispute_is_tied_to_the_order_whose_payment_it_reverses():
+    result = orders.reconcile([_order('#1001')], [_txn(1, order_id='#1001'), _txn(2, 'dispute', '-50.00', 12, payment_reference='txn_1')])
+    assert [m['order'] for m in result['matches']] == ['#1001']
+    assert [(e['code'], e['orders']) for e in result['exceptions']] == [('DISPUTE', ['#1001'])]
+    assert result['orders'][0] == {'order': '#1001', 'source': 'orders:#1001', 'status': 'matched', 'disputed': True}
+
+
+def test_a_chargeback_naming_its_order_and_an_untraceable_dispute_are_both_reported():
+    result = orders.reconcile([_order('#1002')], [_txn(1, order_id='#1002'), _txn(2, 'chargeback', '-50.00', order_id='#1002'),
+                                                 _txn(3, 'dispute', '-20.00', payment_reference='ch_unknown')])
+    assert sorted((e['code'], tuple(e['orders'])) for e in result['exceptions']) == [('DISPUTE', ()), ('DISPUTE', ('#1002',))]
+
+
+def test_other_transaction_types_are_summarised_not_dropped():
+    result = orders.reconcile([_order('#1003')], [_txn(1, order_id='#1003'), _txn(2, 'fee', '-1.75'), _txn(3, 'fee', '-0.30'),
+                                                 _txn(4, 'payout', '-48.00')])
+    summary = {e['detail'].split("'")[1]: e for e in result['exceptions'] if e['code'] == 'UNHANDLED_TRANSACTIONS'}
+    assert set(summary) == {'fee', 'payout'}
+    assert len(summary['fee']['transactions']) == 2 and '-2.05 USD' in summary['fee']['detail']
+
+
+def test_postcode_evidence_is_used_only_when_switched_on():
+    sales = [_order('#2001', postcode='K1A 0B1')]
+    charge = [_txn(1, postcode='k1a0b1')]
+    assert [m['rule'] for m in orders.reconcile(sales, charge, use_postcode=True)['matches']] == ['corroborated']
+    off = orders.reconcile(sales, charge, use_postcode=False)
+    assert off['matches'] == [] and {e['code'] for e in off['exceptions']} == {'AMBIGUOUS'}
+
+
+def test_a_referenced_charge_in_another_currency_is_not_matched():
+    result = orders.reconcile([_order('#3001')], [{**_txn(1, order_id='#3001'), 'currency': 'CAD'}])
+    assert result['matches'] == [] and [e['code'] for e in result['exceptions']] == ['AMOUNT_MISMATCH']
+
+
+def test_refunds_cannot_exceed_their_charge():
+    result = orders.reconcile([_order('#4001')], [_txn(1, order_id='#4001'), _txn(2, 'refund', '-30.00', 9, parent_id='txn_1'),
+                                                 _txn(3, 'refund', '-30.00', 10, parent_id='txn_1')])
+    assert [r['transaction'] for r in result['refunds']] == ['txns:2']
+    assert [(e['code'], e['transactions']) for e in result['exceptions']] == [('REFUND_MISMATCH', ['txns:3'])]
