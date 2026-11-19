@@ -152,3 +152,34 @@ def airports(path) -> dict:
 def cp1252_airports(path) -> dict:
     data = rows(path, encoding="cp1252")
     return {"rows": len(data), "names": sorted(r["name"].strip() for r in data)}
+
+
+def olist_blind_payments(files):
+    """Orders and their payments with the shared order ID removed, plus the true pairing.
+
+    Each order's payments become one charge dated at approval, carrying the customer's
+    postcode prefix as the only corroborating evidence. Orders whose payments don't equal
+    their item total are left out (a separate AMOUNT_MISMATCH case). Returns
+    (orders, charges, truth) where truth maps each charge's source to its order ID.
+    """
+    orders_by_id = {o["order_id"]: o for o in rows(files["orders"])}
+    postcode = {c["customer_id"]: c["customer_zip_code_prefix"] for c in rows(files["customers"])}
+    totals, paid = defaultdict(Decimal), defaultdict(Decimal)
+    for i in rows(files["items"]):
+        totals[i["order_id"]] += Decimal(i["price"]) + Decimal(i["freight_value"])
+    for p in rows(files["payments"]):
+        paid[p["order_id"]] += Decimal(p["payment_value"])
+    day = lambda s: datetime.strptime(s[:10], "%Y-%m-%d").date()
+    usable = sorted(o for o in totals if o in paid and orders_by_id[o]["order_approved_at"]
+                    and orders_by_id[o]["customer_id"] in postcode and abs(totals[o] - paid[o]) <= Decimal("0.01"))
+    orders, charges, truth = [], [], {}
+    for n, oid in enumerate(usable):
+        o = orders_by_id[oid]
+        zip_prefix = postcode[o["customer_id"]]
+        orders.append({"order_id": oid, "source": f"orders:{n}", "date": day(o["order_purchase_timestamp"]),
+                       "amount": totals[oid], "currency": "BRL", "postcode": zip_prefix})
+        source = f"charges:{n}"
+        charges.append({"source": source, "transaction_id": f"charge_{n}", "kind": "charge", "amount": paid[oid],
+                        "currency": "BRL", "date": day(o["order_approved_at"]), "postcode": zip_prefix})
+        truth[source] = oid
+    return orders, charges, truth

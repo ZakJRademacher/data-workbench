@@ -48,7 +48,7 @@ $workbenchPython = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv\Scripts\pytho
 
 Open `recon-results/summary.md` to read the tie-out and review items. [Matching rules, test evidence, and limits](docs/RECONCILIATION_DESIGN.md#phase-1-status).
 
-Version 2.2.0 also matches Shopify orders to Shopify Payments and WooCommerce orders to Stripe charges. It checks order references, currency, amount, and customer evidence. Ambiguous cases go to review. The two store pairings were tested with fixtures based on the export documentation. [Match store orders](docs/RECONCILIATION_DESIGN.md#match-store-orders-to-payments) · [Carry a payout close forward](docs/RECONCILIATION_DESIGN.md#carry-state-into-next-months-payout-reconciliation)
+It also matches Shopify orders to Shopify Payments and WooCommerce orders to Stripe charges. It checks order references, currency, amount, and customer evidence; ambiguous cases go to review, and disputes are tied to their orders. On 98,285 real Olist orders with the order IDs hidden it matched 99.24% automatically with no wrong matches. The two store export layouts were built from the platforms' documentation and still need checking against native exports. [Match store orders](docs/RECONCILIATION_DESIGN.md#match-store-orders-to-payments) · [Carry a payout close forward](docs/RECONCILIATION_DESIGN.md#carry-state-into-next-months-payout-reconciliation)
 
 ## Limits and interpretation
 
