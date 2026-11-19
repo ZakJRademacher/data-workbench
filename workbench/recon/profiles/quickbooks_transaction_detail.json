@@ -11,5 +11,5 @@
     "amount": {"columns": ["Amount"], "type": "money", "required": true}
   },
   "keep": {"field": "type", "values": ["Deposit"]},
-  "verify": "Layout modeled on QuickBooks Online report exports; confirm column names and the Deposit transaction type against a client's export."
+  "verify": "Verified with native CSV, Excel and grouped Excel reports from Intuit's QuickBooks Online Test Drive. Confirm the selected bank account, headings and transaction types for other layouts."
 }

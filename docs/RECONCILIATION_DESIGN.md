@@ -209,6 +209,8 @@ python -m workbench.recon --payouts stripe_payouts.csv --itemized stripe_itemize
 
 It writes `summary.md` (the tie-out and everything needing attention, each naming its payout or books row), `matches.csv` (each match with its rule and evidence), `exceptions.csv` and `result.json` (with SHA-256 hashes of the inputs). `python -m workbench.recon.synth --out demo` writes a sample store's three exports to try it on.
 
+Native CSV, Excel and grouped Excel exports from Intuit's QuickBooks Online Test Drive each contained the same 44 Checking transactions. The profile loaded the same four deposits totaling $6,494.90 from all three. With corresponding synthetic Stripe rows, the unmodified reports kept all three plausible matches in review because the bank records did not identify Stripe. Native verification of both Stripe export layouts and a reconciliation against corresponding bank records remain open. [Intuit Test Drive](https://qbo.intuit.com/redir/testdrive)
+
 **Rules, in order:** payout ID in the deposit; same amount + deposit within −1/+5 days + deposit names the processor, unique on both sides; 2–4 consecutive payouts summing to one processor deposit. Everything else with a candidate goes to review.
 
 **Measured on synthetic stores with known truth** (`tests/test_recon.py` runs a subset on every push):

@@ -4,7 +4,7 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[Download for Windows (2.1.0)](https://github.com/ZakJRademacher/data-workbench/raw/refs/heads/main/deliverables/Data-Workbench-2.1.0.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[Download for Windows (2.2.0)](https://github.com/ZakJRademacher/data-workbench/releases/download/v2.2.0/Data-Workbench-2.2.0.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
@@ -20,9 +20,9 @@ Choose **Explore the demo** for a fictional customer, order, and payment project
 
 - Profiles CSV and `.xlsx` sources; lets you choose worksheet, header, delimiter, and encoding.
 - Appends compatible exports through editable source-to-field mappings.
-- Applies saved types, whitespace and category rules, reusable per-source date/number formats, required fields, bounds, decimal scale, and cross-field comparisons.
+- Applies saved types, UTC timestamp conversion, whitespace and category rules, reusable per-source formats and missing markers, required fields, decimal scale and opt-in rounding, and cross-field comparisons.
 - Keeps identifiers as text, uses exact decimals, and preserves source bytes and record references.
-- Flags conflicting keys, invalid records, and repeated records. Saves corrections and explicit exclusions separately from original files.
+- Flags conflicting keys, invalid records, and repeated records. An optional source setting holds safely readable malformed rows for review. Saves corrections and exclusions separately from original files.
 - Suggests exact-key relationships, previews unmatched and output row counts, and requires approval before publishing combined views.
 - Aggregates child tables before joins when necessary to preserve the base table's grain.
 - Exports complete CSVs, a review workbook, the audit, the recipe, review decisions, a data dictionary, a closed DuckDB snapshot, and a hash manifest.
@@ -36,7 +36,7 @@ There are two conflicting customer copies, one ambiguous order date, one invalid
 
 ## Try payout reconciliation
 
-Version 2.1.0 includes a command-line preview that matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. The preview was tested on synthetic exports. Verify the source profiles against your own export layouts before relying on the results.
+The command-line reconciliation preview matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. Version 2.2.0 can use an earlier monthly close to distinguish a payout that remains open from one already booked. The QuickBooks profile was verified against native CSV and Excel exports from Intuit's sample company. Stripe and paired-export verification remains open.
 
 After the first Windows launch, open PowerShell in the extracted `data-workbench` folder. These commands use the environment set up by the launcher:
 
@@ -47,6 +47,8 @@ $workbenchPython = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv\Scripts\pytho
 ```
 
 Open `recon-results/summary.md` to read the tie-out and review items. [Matching rules, test evidence, and limits](docs/RECONCILIATION_DESIGN.md#phase-1-status).
+
+Version 2.2.0 also matches Shopify orders to Shopify Payments and WooCommerce orders to Stripe charges. It checks order references, currency, amount, and customer evidence. Ambiguous cases go to review. The two store pairings were tested with fixtures based on the export documentation. [Match store orders](docs/RECONCILIATION_DESIGN.md#match-store-orders-to-payments) · [Carry a payout close forward](docs/RECONCILIATION_DESIGN.md#carry-state-into-next-months-payout-reconciliation)
 
 ## Limits and interpretation
 
