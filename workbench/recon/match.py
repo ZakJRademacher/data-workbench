@@ -15,6 +15,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
+from .close import prior_state
 
 PAYOUT_ID = re.compile(r"\bpo_[A-Za-z0-9]{6,}\b")
 
@@ -54,6 +55,7 @@ ACTIONS = {
     "PAYOUT_ARITHMETIC": "The payout doesn't equal the sum of its transactions. Re-export the itemized report for a wider date range.",
     "POSSIBLE_DUPLICATE": "Another deposit already matched this payout. Check whether it was recorded twice.",
     "EARLIER_PAYOUT": "This deposit fits a payout from before the period. Confirm it wasn't already recorded in last period's books.",
+    "PRIOR_PERIOD_BOOKED": "The prior close already matched this payout. Check for export overlap or a duplicate booking.",
 }
 
 
@@ -67,14 +69,16 @@ def _ids_in(deposit):
     return set(PAYOUT_ID.findall(text))
 
 
-def reconcile(payouts, deposits, transactions=None, settings=None):
+def reconcile(payouts, deposits, transactions=None, settings=None, prior=None):
     """payouts: [{"payout_id", "amount", "arrival", ...}]; deposits: [{"source", "date", "amount", "name", "memo", ...}]."""
     s = settings or Settings()
     res = Result()
     # Payouts that arrived shortly before the period may be deposited inside it: they can be claimed
     # by a deposit, but they don't count toward this period and aren't reported if unclaimed.
     lo = s.period_start - timedelta(days=s.window_after) if s.period_start else None
-    payouts = [p for p in payouts if (lo is None or p["arrival"] >= lo) and (s.period_end is None or p["arrival"] <= s.period_end)]
+    prior = prior or {}
+    payouts = [p for p in payouts if (lo is None or p["arrival"] >= lo or prior_state(prior, p) == 'open')
+               and (s.period_end is None or p["arrival"] <= s.period_end)]
     current = {p["payout_id"] for p in payouts if s.period_start is None or p["arrival"] >= s.period_start}
     # Deposits up to the window after the period end can still settle payouts that arrived in it.
     late = s.period_end + timedelta(days=s.window_after) if s.period_end else None
@@ -97,8 +101,18 @@ def reconcile(payouts, deposits, transactions=None, settings=None):
                                "detail": detail, "action": ACTIONS[code]})
 
     # 1. Exact payout ID in the deposit.
+    references = {d['source']: _ids_in(d) & by_id.keys() for d in deposits}
+    referenced_by = defaultdict(list)
+    for source, refs in references.items():
+        for pid in refs:
+            referenced_by[pid].append(source)
+    for pid, locations in referenced_by.items():
+        if len(locations) > 1 or any(len(references[source]) > 1 for source in locations):
+            exception('AMBIGUOUS', [pid], locations, 'The payout reference is shared by multiple deposits or a deposit names multiple payouts.')
+            open_p.discard(pid)
+            open_d.difference_update(locations)
     for d in deposits:
-        refs = [r for r in _ids_in(d) if r in by_id]
+        refs = list(references[d['source']])
         if len(refs) != 1:
             continue
         p = by_id[refs[0]]
@@ -170,8 +184,14 @@ def reconcile(payouts, deposits, transactions=None, settings=None):
     # A deposit that fits a payout from before the period could be its first booking or a duplicate of a
     # booking in last period's books, which this run can't see: ask for confirmation instead of matching.
     for m in [m for m in res.matches if not set(m["payouts"]) <= current]:
+        earlier = set(m['payouts']) - current
+        states = {prior_state(prior, by_id[pid]) for pid in earlier}
+        if states == {'open'}:
+            m['evidence'] += '. The earlier payout was open in the prior close.'
+            continue
         res.matches.remove(m)
-        exception("EARLIER_PAYOUT", m["payouts"], m["deposits"], f"fits {', '.join(m['payouts'])} "
+        code = 'PRIOR_PERIOD_BOOKED' if 'booked' in states else 'EARLIER_PAYOUT'
+        exception(code, m["payouts"], m["deposits"], f"fits {', '.join(m['payouts'])} "
                   f"(arrived {min(by_id[x]['arrival'] for x in m['payouts'])}) by {m['rule'].replace('_', ' ')}")
 
     # Explain what's left.
@@ -242,6 +262,8 @@ def reconcile(payouts, deposits, transactions=None, settings=None):
                   "matched_payouts": sum(len(m["payouts"]) for m in res.matches),
                   "earlier_payouts_to_confirm": sum(len(e["payouts"]) for e in res.exceptions if e["code"] == "EARLIER_PAYOUT"),
                   "review": sum(len(e["payouts"]) for e in res.exceptions if e["code"] == "AMBIGUOUS")}
+    if prior:
+        res.counts['settled_from_prior_period'] = sum(pid not in current for m in res.matches for pid in m['payouts'])
     return res
 
 

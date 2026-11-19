@@ -1,0 +1,20 @@
+{
+  "name": "Shopify Payments transactions CSV",
+  "strict_rows": true,
+  "fields": {
+    "transaction_id": {"columns": ["Transaction ID", "Payment ID"]},
+    "parent_id": {"columns": ["Original Transaction ID", "Original Payment ID"]},
+    "order_id": {"columns": ["Order"]},
+    "date": {"columns": ["Transaction Date"], "type": "date", "formats": ["%Y-%m-%d %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"], "required": true},
+    "kind": {"columns": ["Type"], "required": true},
+    "amount": {"columns": ["Amount"], "type": "money", "required": true},
+    "fee": {"columns": ["Fee"], "type": "money"},
+    "net": {"columns": ["Net"], "type": "money"},
+    "currency": {"columns": ["Currency"], "required": true},
+    "presentment_amount": {"columns": ["Presentment Amount"], "type": "money"},
+    "presentment_currency": {"columns": ["Presentment Currency"]},
+    "email": {"columns": ["Customer Email"]},
+    "postcode": {"columns": ["Billing Zip", "Postal Code"]}
+  },
+  "verify": "Order, date, type, amounts and currencies are documented. Confirm the optional transaction, original-transaction and customer columns before using them. Standard reports may omit them."
+}

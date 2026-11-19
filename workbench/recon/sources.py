@@ -44,12 +44,15 @@ class Loaded:
 
 def parse_money(value):
     """'1,234.56', '$1,234.56', '(12.00)' and '-12.00' as exact decimals."""
-    raw = value.strip().replace("$", "").replace(",", "").replace(" ", "")
+    raw = value.strip()
     negative = raw.startswith("(") and raw.endswith(")")
-    raw = raw.strip("()")
-    if not re.fullmatch(r"[+-]?\d+(\.\d+)?", raw):
+    if negative:
+        raw = raw[1:-1]
+    raw = raw.replace("$", "", 1) if raw.lstrip('+-').startswith('$') else raw
+    sign = '' if negative else '[+-]?'
+    if not re.fullmatch(sign + r"(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?", raw):
         raise ValueError(f"not an amount: {value!r}")
-    amount = Decimal(raw)
+    amount = Decimal(raw.replace(',', ''))
     return -amount if negative else amount
 
 
@@ -80,8 +83,7 @@ def _rows(path):
         raise WorkbenchError(f"{path.name}: use a .csv or .xlsx export.")
 
 
-def load(path, profile_name):
-    spec = profile(profile_name)
+def _layout(path, spec):
     fields = spec["fields"]
     required = [f for f, s in fields.items() if s.get("required")]
     rows = _rows(path)
@@ -98,13 +100,35 @@ def load(path, profile_name):
         wanted = "; ".join(f"{f} ({' or '.join(fields[f]['columns'])})" for f in required)
         raise WorkbenchError(f"{Path(path).name} doesn't look like a {spec['name']} export: no row in the first "
                              f"{MAX_HEADER_SEARCH} has all required columns: {wanted}.")
+    return header, fields, required, columns, rows
+
+
+def load(path, profile_name):
+    spec = profile(profile_name)
+    header, fields, required, columns, rows = _layout(path, spec)
     out = Loaded(profile=profile_name, filename=Path(path).name, records=[], header_row=header,
                  columns={f: fields[f]["columns"][0] for f in columns})
     keep = spec.get("keep")
+    grouped = spec.get('grouped_orders', False)
+    order_rows = {}
+    previous_order = None
     for number, row in enumerate(rows, header + 1):
         values = {f: (str(row[i]).strip() if i < len(row) and row[i] is not None else "") for f, i in columns.items()}
+        item = values.pop('line_item', '')
         if not all(values.get(f) for f in required):
+            key = values.get('order_id') or (previous_order if item else None)
+            order = order_rows.get(key) if grouped else None
+            if order and not values.get('amount') and not values.get('date') and not values.get('currency'):
+                for name in ('email', 'postcode', 'references'):
+                    if values.get(name) and order.get(name) not in (None, values[name]):
+                        raise WorkbenchError(f"{out.filename} row {number}: conflicting {name} for order {key}.")
+                previous_order = key
+                out.skipped += 1  # Shopify continuation for an already loaded order
+                continue
+            if spec.get('strict_rows') and any(str(cell).strip() for cell in row):
+                raise WorkbenchError(f"{out.filename} row {number}: missing required values in the export.")
             out.skipped += 1  # blank, group, title or total row
+            previous_order = None
             continue
         if keep and values.get(keep["field"]) not in keep["values"]:
             out.excluded += 1
@@ -123,5 +147,18 @@ def load(path, profile_name):
                     record[f] = raw
             except (ValueError, InvalidOperation) as exc:
                 raise WorkbenchError(f"{out.filename} row {number}, {f}: {exc}") from exc
+        if grouped:
+            key = record['order_id']
+            previous_order = key
+            previous = order_rows.get(key)
+            if previous:
+                for name, value in record.items():
+                    if name != 'source' and value is not None and previous[name] not in (None, value):
+                        raise WorkbenchError(f"{out.filename} row {number}: conflicting {name} for order {key}.")
+                    if name != 'source' and previous[name] is None:
+                        previous[name] = value
+                out.skipped += 1
+                continue
+            order_rows[key] = record
         out.records.append(record)
     return out

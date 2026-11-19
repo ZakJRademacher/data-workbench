@@ -1,0 +1,20 @@
+{
+  "name": "Stripe itemized balance change from activity CSV",
+  "strict_rows": true,
+  "fields": {
+    "transaction_id": {"columns": ["balance_transaction_id"], "required": true},
+    "payment_reference": {"columns": ["charge_id", "source_id"]},
+    "order_id": {"columns": ["payment_metadata[order_id]", "order_id"]},
+    "date": {"columns": ["created_utc", "created"], "type": "date", "formats": ["%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"], "required": true},
+    "kind": {"columns": ["reporting_category"], "required": true},
+    "amount": {"columns": ["gross"], "type": "money", "required": true},
+    "fee": {"columns": ["fee"], "type": "money"},
+    "net": {"columns": ["net"], "type": "money"},
+    "currency": {"columns": ["currency"], "required": true},
+    "presentment_amount": {"columns": ["customer_facing_amount"], "type": "money"},
+    "presentment_currency": {"columns": ["customer_facing_currency"]},
+    "email": {"columns": ["customer_email"]},
+    "postcode": {"columns": ["card_address_postal_code", "shipping_address_postal_code"]}
+  },
+  "verify": "Select optional charge ID, order metadata and customer fields. Verify the metadata key and that postcode denotes the same address as the order before enabling postal matching."
+}

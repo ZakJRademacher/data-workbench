@@ -4,7 +4,9 @@ import csv
 import codecs
 import itertools
 import json
+import random
 import re
+from collections import deque
 from datetime import date, datetime
 from pathlib import Path
 from zipfile import BadZipFile
@@ -13,10 +15,11 @@ from xml.etree.ElementTree import ParseError
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
-from .common import MAX_COLUMNS, WorkbenchError, digest, identifier
+from .common import MAX_COLUMNS, MAX_ROWS, WorkbenchError, digest, identifier
 
 csv.field_size_limit(10 * 1024 * 1024)
 META = ["__source_id", "__source_name", "__sheet", "__row", "__record_id", "__raw", "__formulas", "__ingest_issue"]
+MALFORMED_ROW = 'Malformed row. '
 
 
 def text(value):
@@ -41,7 +44,8 @@ def is_utf8(path, chunk=1024 * 1024):
 
 
 def csv_settings(path):
-    raw = Path(path).read_bytes()[:128 * 1024]
+    with Path(path).open('rb') as stream:
+        raw = stream.read(128 * 1024)
     if raw.startswith((b'\xff\xfe', b'\xfe\xff')):
         encoding = "utf-16"
         sample = codecs.getincrementaldecoder(encoding)().decode(raw, final=False)
@@ -107,10 +111,56 @@ def infer_field(header, values):
     return field, note
 
 
+def _sample_types(first_rows, remaining, header, width, end_row):
+    """Include the start, a deterministic cross-file sample, and the last complete rows."""
+    rng = random.Random(0)
+    head, reservoir, tail = [], [], deque(maxlen=64)
+    scanned = 0
+    rows = itertools.islice(itertools.chain(first_rows, remaining), end_row or MAX_ROWS + header)
+    try:
+        for row in itertools.islice(rows, header, None):
+            if len(row) < width or any(text(cell).strip() for cell in row[width:]):
+                continue
+            row = [text(cell) for cell in row[:width]]
+            if not any(row):
+                continue
+            tail.append(row)
+            if len(head) < 100:
+                head.append(row)
+            scanned += 1
+            if len(reservoir) < 512:
+                reservoir.append(row)
+            elif (index := rng.randrange(scanned)) < len(reservoir):
+                reservoir[index] = row
+    except (csv.Error, UnicodeDecodeError):
+        # Preserve the readable preview when a later record fails. Import reports the file error.
+        pass
+    return head + reservoir + list(tail)
+
+
+def _inspect_rows(stream, settings):
+    rows = [[text(c) for c in row] for row in itertools.islice(stream, 220)]
+    if not rows:
+        raise WorkbenchError('This file or sheet is empty.')
+    header = settings.get('header_row', header_guess(rows))
+    if not isinstance(header, int) or not 1 <= header <= min(len(rows), 200):
+        raise WorkbenchError('Choose an existing header row between 1 and 200.')
+    headings = headers_from(rows[header - 1])
+    end = settings.get('end_row')
+    if end is not None and (not isinstance(end, int) or end <= header):
+        raise WorkbenchError('The last data row must be after the header, or left blank for the whole table.')
+    sample = [r[:len(headings)] for r in rows[header: min(header + 100, end) if end else header + 100] if any(r)]
+    type_rows = _sample_types(rows, stream, header, len(headings), end)
+    return rows, header, headings, end, sample, type_rows
+
+
 def _inspect(path, filename, source_id, settings=None):
     settings = settings or {}
     extension = Path(filename).suffix.lower()
     sheets = []
+    row_errors = settings.get('row_errors', 'reject')
+    if row_errors not in {'reject', 'review'}:
+        raise WorkbenchError('Choose Reject file or Send malformed rows to review.')
     if extension == ".csv":
         encoding, delimiter = csv_settings(path)
         encoding = settings.get("encoding", encoding)
@@ -118,7 +168,7 @@ def _inspect(path, filename, source_id, settings=None):
         if encoding not in ("utf-8-sig", "cp1252", "utf-16") or delimiter not in (",", ";", "\t", "|"):
             raise WorkbenchError("Choose a supported CSV encoding and delimiter.")
         with open(path, encoding=encoding, newline="") as stream:
-            rows = list(itertools.islice(csv.reader(stream, delimiter=delimiter, strict=True), 220))
+            details = _inspect_rows(csv.reader(stream, delimiter=delimiter, strict=True), settings)
         selected = ""
     elif extension == ".xlsx":
         workbook = load_workbook(path, read_only=True, data_only=True, keep_links=False)
@@ -128,32 +178,24 @@ def _inspect(path, filename, source_id, settings=None):
             if selected not in sheets:
                 raise WorkbenchError("The selected worksheet no longer exists.")
             workbook[selected].reset_dimensions()
-            rows = [[text(c) for c in r] for r in itertools.islice(workbook[selected].iter_rows(values_only=True), 220)]
+            details = _inspect_rows(workbook[selected].iter_rows(values_only=True), settings)
         finally:
             workbook.close()
         encoding, delimiter = "", ""
     else:
         raise WorkbenchError("Use a .csv or .xlsx file. Legacy .xls and macro workbooks are not supported.")
-    if not rows:
-        raise WorkbenchError("This file or sheet is empty.")
-    header_row = settings.get("header_row", header_guess(rows))
-    if not isinstance(header_row, int) or not 1 <= header_row <= min(len(rows), 200):
-        raise WorkbenchError("Choose an existing header row between 1 and 200.")
-    headers = headers_from(rows[header_row - 1])
-    end_row = settings.get("end_row")
-    if end_row is not None and (not isinstance(end_row, int) or end_row <= header_row):
-        raise WorkbenchError("The last data row must be after the header, or left blank for the whole table.")
-    sample = [r[:len(headers)] for r in rows[header_row:header_row + 100] if any(v not in (None, "") for v in r)]
+    rows, header_row, headers, end_row, sample, type_rows = details
     fields, notes = [], []
     for i, header in enumerate(headers):
-        field, note = infer_field(header, [r[i] if i < len(r) else "" for r in sample])
+        field, note = infer_field(header, [r[i] for r in type_rows])
         base = field["name"]
         while field["name"] in [f["name"] for f in fields]:
             field["name"] += "_2"
         fields.append(field)
         notes.append({"field": field["name"], "reason": note})
     return {"id": source_id, "filename": filename, "settings": {"sheet": selected, "header_row": header_row,
-            "encoding": encoding, "delimiter": delimiter, "end_row": end_row}, "sheets": sheets, "headers": headers,
+            "encoding": encoding, "delimiter": delimiter, "end_row": end_row,
+            **({'row_errors': 'review'} if row_errors == 'review' else {})}, "sheets": sheets, "headers": headers,
             "sample": sample, "fields": fields, "notes": notes, "header_candidates": rows[:20]}
 
 
@@ -200,7 +242,11 @@ def _csv_records(path, settings, header_row, expected_headers):
             if not values:
                 continue
             if len(values) != len(expected_headers):
-                raise WorkbenchError(f"Record {number} has {len(values)} fields; expected {len(expected_headers)}. No rows from this file were accepted.")
+                reason = f'Record {number} has {len(values)} fields, expected {len(expected_headers)}.'
+                if settings.get('row_errors') != 'review':
+                    raise WorkbenchError(reason + ' No rows from this file were accepted.')
+                yield number, values, MALFORMED_ROW + reason + ' Replace the source with a corrected file or explicitly exclude this record.', {}
+                continue
             yield number, values, "", {}
 
 
@@ -227,10 +273,13 @@ def _excel_records(path, settings, header_row, expected_headers):
             formulas = [c for c in formula_cells if c.data_type == "f"]
             if not any(values) and not formulas:
                 continue
-            if any(values[len(expected_headers):]):
+            extra = values[len(expected_headers):]
+            if any(extra) and settings.get('row_errors') != 'review':
                 raise WorkbenchError(f"Worksheet row {number} contains values beyond the mapped headings.")
             values = (values + [""] * len(expected_headers))[:len(expected_headers)]
             issues = []
+            if any(extra):
+                issues.append(MALFORMED_ROW + 'Worksheet row contains values beyond the mapped headings. Replace the source or explicitly exclude this record.')
             provenance = {}
             for i, cell in enumerate(formula_cells[:len(expected_headers)]):
                 if cell.data_type == "f":
@@ -243,7 +292,7 @@ def _excel_records(path, settings, header_row, expected_headers):
                     # Excel stores this as a number but displays a padded identifier.
                     provenance[expected_headers[i]] = {"stored_value": text(cell.value), "number_format": cell.number_format}
                     values[i] = str(int(cell.value)).zfill(len(cell.number_format)) if float(cell.value).is_integer() else values[i]
-            yield number, values, "; ".join(issues), provenance
+            yield number, values + (extra if any(extra) else []), "; ".join(issues), provenance
     finally:
         values_book.close()
         formula_book.close()
@@ -259,6 +308,11 @@ def stage_source(path, source, mapping, output, field_names, row_limit):
             if count > row_limit:
                 raise WorkbenchError("Project exceeds the one-million-row limit; split it into smaller projects.")
             raw = dict(zip(source["headers"], values))
+            if len(values) > len(source['headers']):
+                key = '__unmapped_values'
+                while key in raw:
+                    key += '_'
+                raw[key] = values[len(source['headers']):]
             record_id = digest([source["id"], source["sha256"], source["settings"], row_number])[:32]
             writer.writerow([source["id"], source["filename"], source["settings"]["sheet"], row_number,
                              record_id, json.dumps(raw, ensure_ascii=False), json.dumps(formulas, ensure_ascii=False), issue] +

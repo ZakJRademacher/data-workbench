@@ -127,6 +127,8 @@ def configure_flights(recipe):
     for t in recipe["tables"]:
         for f in t["fields"]:
             f["missing"] = ["NA"]
+    for n in ("distance", "arr_delay", "dep_delay", "air_time"):
+        field(recipe, "flights", n).update(type="integer", inferred=False)
     for n in ("temp", "dewp", "humid", "precip", "pressure", "visib"):
         field(recipe, "weather", n)["type"] = "decimal"
     field(recipe, "weather", "wind_dir")["type"] = "integer"
