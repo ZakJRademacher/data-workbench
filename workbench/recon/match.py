@@ -39,6 +39,7 @@ class Settings:
 
 @dataclass
 class Result:
+    payouts: list = field(default_factory=list)      # every payout considered, including ones carried from the prior close
     matches: list = field(default_factory=list)      # {"rule", "payouts": [ids], "deposits": [sources], "amount", "evidence"}
     exceptions: list = field(default_factory=list)   # {"code", "payouts", "deposits", "amount", "detail", "action"}
     tieout: dict = field(default_factory=dict)
@@ -56,6 +57,8 @@ ACTIONS = {
     "POSSIBLE_DUPLICATE": "Another deposit already matched this payout. Check whether it was recorded twice.",
     "EARLIER_PAYOUT": "This deposit fits a payout from before the period. Confirm it wasn't already recorded in last period's books.",
     "PRIOR_PERIOD_BOOKED": "The prior close already matched this payout. Check for export overlap or a duplicate booking.",
+    "PAYOUT_STILL_OPEN": "Carried from the prior close and still not deposited. Find the deposit in the bank feed, or confirm with the processor that the payout failed.",
+    "PRIOR_CLOSE_MISMATCH": "The payout export disagrees with the prior close about this payout. Check which export is correct before closing the month.",
 }
 
 
@@ -77,8 +80,21 @@ def reconcile(payouts, deposits, transactions=None, settings=None, prior=None):
     # by a deposit, but they don't count toward this period and aren't reported if unclaimed.
     lo = s.period_start - timedelta(days=s.window_after) if s.period_start else None
     prior = prior or {}
-    payouts = [p for p in payouts if (lo is None or p["arrival"] >= lo or prior_state(prior, p) == 'open')
+    # Payouts the prior close left open or unresolved stay in scope until they're settled, even when this
+    # month's payout export no longer includes them: the close records their amount and arrival.
+    carried = {pid for pid, saved in prior.items() if saved['state'] in ('open', 'review')}
+    exported = {p["payout_id"]: p for p in payouts}
+    mismatched = []
+    for pid in sorted(carried):
+        saved = prior[pid]
+        if pid in exported and prior_state(prior, exported[pid]) is None:
+            mismatched.append(pid)
+        elif pid not in exported:
+            payouts = [*payouts, {"payout_id": pid, "amount": Decimal(saved["amount"]),
+                                  "arrival": date.fromisoformat(saved["arrival"]), "source": "prior close"}]
+    payouts = [p for p in payouts if (lo is None or p["arrival"] >= lo or p["payout_id"] in carried)
                and (s.period_end is None or p["arrival"] <= s.period_end)]
+    res.payouts = payouts
     current = {p["payout_id"] for p in payouts if s.period_start is None or p["arrival"] >= s.period_start}
     # Deposits up to the window after the period end can still settle payouts that arrived in it.
     late = s.period_end + timedelta(days=s.window_after) if s.period_end else None
@@ -227,6 +243,15 @@ def reconcile(payouts, deposits, transactions=None, settings=None, prior=None):
         else:
             exception("DEPOSIT_NO_PAYOUT", [], [src], f"processor deposit of {_money(d['amount'])} on {d['date']} matches no payout")
         open_d.discard(src)
+    for pid in sorted(open_p & carried - current, key=lambda x: (by_id[x]["arrival"], x)):
+        p, saved = by_id[pid], prior[pid]
+        code = "PRIOR_CLOSE_MISMATCH" if pid in mismatched else "PAYOUT_STILL_OPEN"
+        detail = (f"{_money(p['amount'])} arrived {p['arrival']}; "
+                  + (f"the prior close recorded {_money(Decimal(saved['amount']))} arriving {saved['arrival']}"
+                     if pid in mismatched else
+                     f"{'open' if saved['state'] == 'open' else 'unresolved in review'} at the prior close and still no deposit"))
+        exception(code, [pid], [], detail)
+    open_p -= carried - current
     for pid in sorted(open_p & current, key=lambda x: (by_id[x]["arrival"], x)):
         p = by_id[pid]
         near_end = s.period_end is not None and p["arrival"] > s.period_end - timedelta(days=s.window_after)
@@ -264,6 +289,9 @@ def reconcile(payouts, deposits, transactions=None, settings=None, prior=None):
                   "review": sum(len(e["payouts"]) for e in res.exceptions if e["code"] == "AMBIGUOUS")}
     if prior:
         res.counts['settled_from_prior_period'] = sum(pid not in current for m in res.matches for pid in m['payouts'])
+        still = [e for e in res.exceptions if e["code"] in ("PAYOUT_STILL_OPEN", "PRIOR_CLOSE_MISMATCH")]
+        res.counts['still_open_from_prior'] = sum(len(e["payouts"]) for e in still)
+        res.tieout['still_open_from_prior_total'] = sum((e["amount"] for e in still), Decimal(0))
     return res
 
 
