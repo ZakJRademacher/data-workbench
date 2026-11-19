@@ -1,11 +1,12 @@
 """Phase 1 reconciliation: Stripe payouts against QuickBooks deposits, and payout arithmetic."""
 from datetime import date
 from decimal import Decimal as D
+import json
 
 import pytest
 
 from workbench.common import WorkbenchError
-from workbench.recon import match, sources, synth
+from workbench.recon import match, orders, sources, synth
 from workbench.recon.__main__ import main as cli
 
 OCT = match.Settings(period_start=date(2026, 10, 1), period_end=date(2026, 10, 31))
@@ -166,3 +167,79 @@ def test_command_line_writes_the_report(tmp_path):
     summary = (tmp_path / "out" / "summary.md").read_text(encoding="utf-8")
     assert "**Unexplained** | **$0.00**" in summary
     assert {p.name for p in (tmp_path / "out").iterdir()} == {"summary.md", "matches.csv", "exceptions.csv", "result.json"}
+
+
+def test_order_reconciliation_never_guesses_across_seeded_collisions():
+    for seed in range(150):
+        sales, payments, truth = synth.order_trial(seed)
+        result = orders.reconcile(sales, payments, use_postcode=False)
+        assert {m['order']: set(m['transactions']) for m in result['matches']} == truth['matches'], seed
+        assert {m['transaction']: m['charge'] for m in result['refunds']} == truth['refunds'], seed
+        assert {m['order']: m['status'] for m in result['orders']} == truth['statuses'], seed
+        assert {m['code'] for m in result['exceptions']} == truth['exceptions'], seed
+
+
+@pytest.mark.parametrize('platform,orders_csv,charges_csv,result', [
+    ('shopify',
+     'Name,Created at,Total,Currency,Lineitem name,Payment References\n'
+     '#1001,2026-10-01 11:00:00 -0400,21.50,CAD,Item one,\n'
+     '#1001,,,,Item two,\n'
+     ',,,,Item three,\n',
+     'Type,Transaction Date,Amount,Fee,Net,Currency,Order,Presentment Amount,Presentment Currency\n'
+     'charge,2026-10-01 11:00:00 -0400,15.90,0.70,15.20,USD,#1001,21.50,CAD\n'
+     'refund,2026-10-03 11:00:00 -0400,-4.00,0.00,-4.00,USD,#1001,-5.41,CAD\n',
+     {'order': '#1001', 'amount': '21.50', 'currency': 'CAD'}),
+    ('woocommerce-stripe',
+     'order_number,order_date,order_total,order_currency,billing_email\n'
+     '512,2026-10-01 11:00:00,51.00,USD,buyer@example.test\n',
+     'reporting_category,created_utc,gross,currency,balance_transaction_id,charge_id,payment_metadata[order_id]\n'
+     'charge,2026-10-01 15:00:00,51.00,USD,txn_charge,ch_512,512\n'
+     'refund,2026-10-03 15:00:00,-11.00,USD,txn_refund,ch_512,\n',
+     {'order': '512', 'amount': '51.00', 'currency': 'USD'}),
+])
+def test_order_cli_supported_profile_pairs(tmp_path, platform, orders_csv, charges_csv, result):
+    order_csv, charge_csv = tmp_path / 'orders.csv', tmp_path / 'charges.csv'
+    order_csv.write_text(orders_csv, encoding='utf-8')
+    charge_csv.write_text(charges_csv, encoding='utf-8')
+    out = tmp_path / 'out'
+    assert cli(['orders', '--platform', platform, '--orders', str(order_csv),
+                '--transactions', str(charge_csv), '--out', str(out)]) == 0
+    report = json.loads((out / 'result.json').read_text(encoding='utf-8'))
+    assert len(report['orders']) == len(report['matches']) == 1
+    assert all(report['matches'][0][key] == value for key, value in result.items())
+    if platform == 'shopify':
+        assert {e['code'] for e in report['exceptions']} == {'REFUND_NO_CHARGE'}
+    else:
+        assert report['refunds'][0]['amount'] == '11.00'
+
+
+def test_saved_close_distinguishes_previously_booked_and_open_payouts(tmp_path):
+    payout_csv = tmp_path / 'payouts.csv'
+    books_csv = tmp_path / 'books.csv'
+    payout_csv.write_text(
+        'id,Amount,Arrival Date,Currency\npo_OPENAAAA,100.00,2026-09-29,USD\n'
+        'po_BOOKAAAA,95.00,2026-09-30,USD\n', encoding='utf-8')
+    books_csv.write_text('Date,Transaction Type,Name,Memo,Amount\n'
+                         '09/30/2026,Deposit,Stripe,po_BOOKAAAA,95.00\n', encoding='utf-8')
+
+    def close_month(period, folder, account='Operating USD', prior=None):
+        return cli(['--payouts', str(payout_csv), '--books', str(books_csv), '--period', period,
+                    '--out', str(folder), '--close-account', account]
+                   + (['--prior-close', str(prior)] if prior else []))
+
+    september = tmp_path / 'sept'
+    assert close_month('2026-09', september) == 0
+    state = september / 'close-state.json'
+    data = json.loads(state.read_text(encoding='utf-8'))
+    assert {key: value['state'] for key, value in data['payouts'].items()} == {
+        'po_OPENAAAA': 'open', 'po_BOOKAAAA': 'booked'}
+    books_csv.write_text('Date,Transaction Type,Name,Memo,Amount\n'
+                         '10/01/2026,Deposit,Stripe,po_BOOKAAAA,95.00\n'
+                         '10/02/2026,Deposit,Stripe,po_OPENAAAA,100.00\n', encoding='utf-8')
+    october = tmp_path / 'oct'
+    assert close_month('2026-10', october, prior=state) == 0
+    report = json.loads((october / 'result.json').read_text(encoding='utf-8'))
+    assert [m['payouts'] for m in report['matches']] == [['po_OPENAAAA']]
+    assert 'PRIOR_PERIOD_BOOKED' in {e['code'] for e in report['exceptions']}
+    assert report['counts']['settled_from_prior_period'] == 1
+    assert close_month('2026-10', tmp_path / 'wrong', account='Other account', prior=state) == 2

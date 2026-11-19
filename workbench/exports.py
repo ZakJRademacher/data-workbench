@@ -72,9 +72,12 @@ def write_workbook(con, recipe, manifest, path):
         ws.auto_filter.ref = f"A3:{get_column_letter(len(headers))}{max(3, count + 3)}"
         return ws
 
+    status = manifest['status']
+    if manifest.get('malformed_rows_held'):
+        status += f". Partial results with {manifest['malformed_rows_held']} malformed rows held"
     sheet("Project summary", ["Table", "Input rows", "Accepted", "Needs review", "Excluded"],
           [[t[k] for k in ("name", "input", "accepted", "review", "excluded")] for t in manifest["tables"]],
-          f"Status: {manifest['status']}. Parsed input rows = accepted + review + excluded. Unreadable files have unknown counts.")
+          f"Status: {status}. Parsed input rows = accepted + review + excluded. Unreadable files have unknown counts.")
     totals = [[t["name"], field, value["sum"], value["populated"]] for t in manifest["tables"] for field, value in t["totals"].items()]
     sheet("Accepted totals", ["Table", "Field", "Exact total (text)", "Populated accepted rows"], totals,
           "Exact decimal totals are text to preserve precision. Units and currencies are not inferred. Blank total means no populated values.")

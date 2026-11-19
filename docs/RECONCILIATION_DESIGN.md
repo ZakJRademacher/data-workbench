@@ -51,8 +51,9 @@ Each supported export gets a **profile**: a versioned JSON file that maps its co
 
 | Profile | What the export looks like | Quirks the profile handles |
 |---|---|---|
-| Shopify orders | One row per line item; later rows of the same order leave order-level fields blank ([Shopify help](https://help.shopify.com/en/manual/orders/manage-orders/exporting-orders)) | Collapse to one row per order before matching, or totals double count |
-| Shopify Payments transactions | One row per balance transaction with amount, fee and net, and payout date ([Shopify help](https://help.Shopify.com/en/manual/payments/shopify-payments/getting-paid-with-shopify-payments/view-payouts/view-details)) | Columns vary by export; the profile must be confirmed against a client sample |
+| Shopify orders | One row per line item with order-level fields on the first row | Collapse repeated order numbers before matching. [Shopify order export](https://help.shopify.com/en/manual/fulfillment/managing-orders/exporting-orders) |
+| Shopify Payments transactions | Each row includes amount, fee and net in the settlement currency. Presentment amount and currency can appear separately. | Confirm optional references and customer columns against a native export. [Shopify transaction export](https://help.shopify.com/en/manual/payments/shopify-payments/payouts/view-details) |
+| WooCommerce orders and Stripe balance activity | The WooCommerce order CSV supplies totals and customer details. Stripe can include charge references and order metadata. | Select the needed columns. [WooCommerce order export](https://woocommerce.com/document/ordercustomer-csv-export/) · [Stripe balance report](https://docs.stripe.com/reports/balance) |
 | Stripe itemized payout reconciliation | One row per balance transaction, with `balance_transaction_id`, `reporting_category` and `automatic_payout_id` linking it to its payout ([Stripe docs](https://docs.stripe.com/reports/payout-reconciliation)) | Only for automatic payouts; columns are customizable, so required columns are validated on import |
 | QuickBooks transaction detail | Report export with title rows above the header; deposits, fees and refunds as journal lines | Header-row detection (already in Workbench); sign conventions per account |
 
@@ -109,7 +110,7 @@ What this decides:
 - **A corroborating signal changes everything.** It lets the window widen, recovering late charges, while removing wrong matches.
 - **The window is a per-leg setting, chosen by measurement.** The defaults come from this table; each client's run reports its own review and no-candidate rates.
 
-Caveats: Olist's approval time stands in for the charge date, and its postcode is a five-digit prefix, coarser than an email address. Real Shopify-to-Stripe data should do at least this well with email, but that must be measured on client data (§8), not assumed.
+Olist's approval time stands in for the charge date, and its postcode is a five-digit prefix. Measure coverage for both processor pairings with native exports before applying the findings to a store.
 
 ### 5.3 One-to-many cases
 
@@ -178,8 +179,9 @@ The engine's existing pieces are reused unchanged: ingest and header detection, 
 | Phase | Scope | Why this order |
 |---|---|---|
 | 1 | Stripe payouts ↔ QuickBooks deposits (leg 3) and payout arithmetic (leg 2) | Smallest useful slice. Stripe's payout IDs make the arithmetic leg exact, and payouts are few, large and dated, so matching them to deposits is rarely ambiguous. "Which payouts never hit the books" is a very common bookkeeping question |
-| 2 | Shopify orders ↔ Stripe charges (leg 1) with tolerant matching and the synthetic-store evaluation | Needs the evidence rules and the generator |
-| 3 | Shopify Payments profile, refunds and disputes, period carry-forward, tie-out statement | Completes the monthly close |
+| 2 | Shopify orders ↔ Shopify Payments transactions, then WooCommerce orders ↔ Stripe charges | Test amount, references, customer evidence, split tender and refund linkage against known outcomes |
+| 3 | Carry Stripe payout status between monthly QuickBooks closes | Distinguish open payouts from prior bookings |
+| Later | Shopify Payments payout-to-bank tie-out and dispute classification | Requires native exports with payout, bank and dispute records |
 | 4 | AI profile suggestions for unfamiliar exports; PDF bank statements | Only once the deterministic core is measured |
 
 ## 11. Alternatives considered
@@ -194,7 +196,7 @@ The engine's existing pieces are reused unchanged: ingest and header detection, 
 - **Weak customer evidence.** Guest checkouts and wallet payments may lack email or postcode, so review rates will be higher. Measure on the first client sample before promising rates.
 - **Time zones.** Store-local and UTC dates disagree near midnight. The date window absorbs this, but tie-out period boundaries must use one declared time zone.
 - **Scope creep into accounting.** The tool explains differences; it doesn't decide how to book them. Suggested actions stay suggestions.
-- **Open:** whether to support Shopify Payments before Stripe in phase 1. That depends on which the first clients use.
+- **Open.** Validate the native Shopify Payments payout-to-bank layout before extending Phase 1 to that processor.
 
 ## Phase 1 status
 
@@ -223,7 +225,28 @@ It writes `summary.md` (the tie-out and everything needing attention, each namin
 
 What the evaluation changed during the build:
 
-- **Duplicates of last month's bookings.** The first run made 7 wrong matches in 6,596 payouts, all the same case: a payout that arrived on the last day of September, booked in September and booked again on October 1. October's books alone can't tell that apart from a legitimate first booking. Deposits that fit a payout from before the period now become an `EARLIER_PAYOUT` item to confirm instead of a match; carrying state between periods (phase 3) will resolve these automatically.
+- **Duplicates of last month's bookings.** The first run made 7 wrong matches in 6,596 payouts, all from deposits booked again on October 1. If evidence from September is unavailable, October holds possible matches to September payouts as `EARLIER_PAYOUT`. A saved close can establish whether September already booked a payout.
+
+## Match store orders to payments
+
+```powershell
+python -m workbench.recon orders --platform shopify --orders orders.csv --transactions transactions.csv --out shopify-review
+python -m workbench.recon orders --platform woocommerce-stripe --orders orders.csv --transactions stripe-balance.csv --out woo-review
+```
+
+- Include the full order and payment ranges, allowing enough overlap for the seven-day fallback window. Shopify order totals are counted once across repeated order numbers and adjacent unnamed line items with no separate order-level values. Conflicting order-level values stop the import.
+- Transaction order numbers and exported payment references take priority. Without a reference, the amount and currency, transaction date within seven days of the order, and customer email must agree. Enable `--match-postcode` only after confirming that both exports use the same billing postcode convention. Two charges can settle one order through clear order references or matching customer email, with a unique combination on both sides. Ambiguities go to review.
+- Shopify presentment amounts are used when their currency matches the order. Refunds require an explicit original charge reference. If the export omits it, the refund stays in review. The command writes matched orders, linked refunds and reasons for review, with input hashes in `result.json`.
+- Run `python -B -m pytest tests/test_recon.py -q` to reproduce the evaluation. In 150 seeded stores with 1,050 orders, 450 matched automatically (42.9%), 450 went to review (42.9%), and 150 were flagged as unpaid (14.3%). All 450 automatic assignments and 150 linked refunds agreed with the generated ledger. These rates describe a fixture with deliberately frequent faults. Both profile pairs have CSV contract tests, with native export confirmation tracked in each profile's `verify` field.
+
+## Carry state into next month's payout reconciliation
+
+```powershell
+python -m workbench.recon --payouts sept-payouts.csv --itemized sept-itemized.csv --books sept-books.csv --period 2026-09 --close-account "Operating USD" --out sept-review
+python -m workbench.recon --payouts oct-payouts.csv --itemized oct-itemized.csv --books oct-books.csv --period 2026-10 --close-account "Operating USD" --prior-close sept-review/close-state.json --out oct-review
+```
+
+Export deposits for the period being closed and include the earlier payout rows still under consideration. Save `close-state.json` with each period's evidence. Supply the immediately preceding close for the same account label and currency. An earlier payout needs the same ID, arrival date and amount as an open payout in the prior close, along with the normal matching evidence. A payout already booked produces `PRIOR_PERIOD_BOOKED`. A missing or inconclusive prior record produces `EARLIER_PAYOUT`. The report lists prior-period settlements separately from current-period payout totals.
 - **Duplicate detection without false alarms.** Flagging any leftover deposit with the exact amount of a matched or reviewed payout caught every duplicate but raised 413 false flags on other income deliberately given colliding amounts. Restricting it to deposits with no named payer kept every true duplicate and removed every false flag.
 - **Two faults on one payout.** When a gross booking coincides with an incomplete itemized export, the gross amount can't be computed; the payout is still flagged, as not deposited plus an arithmetic fault. The evaluation counts these separately (1 normal, 6 hostile).
 

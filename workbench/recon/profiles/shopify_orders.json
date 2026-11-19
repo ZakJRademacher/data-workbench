@@ -1,0 +1,16 @@
+{
+  "name": "Shopify Orders CSV",
+  "strict_rows": true,
+  "grouped_orders": true,
+  "fields": {
+    "order_id": {"columns": ["Name"], "required": true},
+    "date": {"columns": ["Created at"], "type": "date", "formats": ["%Y-%m-%d %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"], "required": true},
+    "amount": {"columns": ["Total"], "type": "money", "required": true},
+    "currency": {"columns": ["Currency"], "required": true},
+    "line_item": {"columns": ["Lineitem name", "Lineitem sku", "Lineitem quantity"]},
+    "email": {"columns": ["Email"]},
+    "postcode": {"columns": ["Billing Zip"]},
+    "references": {"columns": ["Payment References", "Payment Reference"]}
+  },
+  "verify": "Documented headings. Verify identity and which headings repeat on continuation rows with a native store export."
+}

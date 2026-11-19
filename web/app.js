@@ -246,7 +246,8 @@ function configureSource(id) {
     const settings = {
       ...s.settings,
       header_row: Number($('#source-header').value),
-      end_row: $('#source-end').value ? Number($('#source-end').value) : null
+      end_row: $('#source-end').value ? Number($('#source-end').value) : null,
+      row_errors: $('#source-row-errors').value
     };
     if ($('#source-sheet')) settings.sheet = $('#source-sheet').value;
     if ($('#source-encoding')) {
@@ -257,18 +258,20 @@ function configureSource(id) {
     await loadProject(state.project.id);
     notify('Source selection saved. Check the recipe mappings before rerunning.');
   });
-  $('#modal-body .form-grid').insertAdjacentHTML('beforeend', `<label>Last data row / record (optional)<input id="source-end" type="number" min="2" value="${esc(s.settings.end_row ?? '')}" placeholder="Read to end"></label>`);
+  $('#modal-body .form-grid').insertAdjacentHTML('beforeend', `<label>Last data row / record (optional)<input id="source-end" type="number" min="2" value="${esc(s.settings.end_row ?? '')}" placeholder="Read to end"></label><label>Malformed rows<select id="source-row-errors">${selectOptions([{value:'reject',label:'Reject the source'},{value:'review',label:'Hold rows with extra or missing cells'}],s.settings.row_errors || 'reject')}</select></label>`);
 }
 
 function renderRecipe() {
   const r = state.recipe;
-  $('#table-editors').innerHTML = r ? r.tables.map((t, ti) => `<article class="table-editor"><div class="card-heading"><h3>▤ &nbsp;${esc(t.name)}</h3><span class="muted">${t.sources.length} source${t.sources.length===1?'':'s'}</span><div class="actions"><label class="compact">Duplicates <select data-dup="${ti}">${selectOptions([{value:'flag',label:'Flag repeats'},{value:'keep_all',label:'Keep all'},{value:'drop_exact',label:'Exclude exact repeats'}],t.duplicate_policy)}</select></label><button class="quiet small" data-add-field="${ti}">＋ Field</button></div></div><div class="grid-wrap"><table class="field-table"><thead><tr><th>OUTPUT FIELD</th><th>TYPE</th><th>REQUIRED</th><th>KEY</th><th>RULES</th></tr></thead><tbody>${t.fields.map((f,fi)=>`<tr><td><b>${esc(f.name)}</b></td><td><select data-type="${ti},${fi}">${selectOptions([{value:'text',label:'Text'},{value:'integer',label:'Whole number'},{value:'decimal',label:'Decimal'},{value:'date',label:'Date'}],f.type)}</select></td><td><input type="checkbox" aria-label="${esc(f.name)} required" data-required="${ti},${fi}" ${f.required?'checked':''}></td><td><input type="checkbox" aria-label="${esc(f.name)} key" data-key="${ti},${fi}" ${t.key.includes(f.name)?'checked':''}></td><td><button class="quiet small" data-rules="${ti},${fi}">Configure ↗</button></td></tr>`).join('')}</tbody></table></div><div class="source-mappings">${t.sources.map((s,si)=>{const source=state.project.sources.find(x=>x.id===s.id);return `<div class="mapping-row"><b>${esc(source?.filename||'Missing source')}</b><span>→ ${esc(t.name)}</span><button class="quiet small" data-map="${ti},${si}">Map columns</button><label>Move to <select data-move="${ti},${si}">${selectOptions(r.tables.map(t=>t.name),t.name)}</select></label></div>`;}).join('')}</div></article>`).join('') : '<div class="empty">Add source files, then generate a starting recipe.</div>';
+  $('#table-editors').innerHTML = r ? r.tables.map((t, ti) => `<article class="table-editor"><div class="card-heading"><h3>▤ &nbsp;${esc(t.name)}</h3><span class="muted">${t.sources.length} source${t.sources.length===1?'':'s'}</span><div class="actions"><label class="compact">Duplicates <select data-dup="${ti}">${selectOptions([{value:'flag',label:'Flag repeats'},{value:'keep_all',label:'Keep all'},{value:'drop_exact',label:'Exclude exact repeats'}],t.duplicate_policy)}</select></label><button class="quiet small" data-add-field="${ti}">＋ Field</button></div></div><div class="grid-wrap"><table class="field-table"><thead><tr><th>OUTPUT FIELD</th><th>TYPE</th><th>REQUIRED</th><th>KEY</th><th>RULES</th></tr></thead><tbody>${t.fields.map((f,fi)=>`<tr><td><b>${esc(f.name)}</b></td><td><select data-type="${ti},${fi}">${selectOptions([{value:'text',label:'Text'},{value:'integer',label:'Whole number'},{value:'decimal',label:'Decimal'},{value:'date',label:'Date'},{value:'timestamp',label:'Timestamp (UTC)'}],f.type)}</select></td><td><input type="checkbox" aria-label="${esc(f.name)} required" data-required="${ti},${fi}" ${f.required?'checked':''}></td><td><input type="checkbox" aria-label="${esc(f.name)} key" data-key="${ti},${fi}" ${t.key.includes(f.name)?'checked':''}></td><td><button class="quiet small" data-rules="${ti},${fi}">Configure ↗</button></td></tr>`).join('')}</tbody></table></div><div class="source-mappings">${t.sources.map((s,si)=>{const source=state.project.sources.find(x=>x.id===s.id);return `<div class="mapping-row"><b>${esc(source?.filename||'Missing source')}</b><span>→ ${esc(t.name)}</span><button class="quiet small" data-map="${ti},${si}">Map columns</button><label>Move to <select data-move="${ti},${si}">${selectOptions(r.tables.map(t=>t.name),t.name)}</select></label></div>`;}).join('')}</div></article>`).join('') : '<div class="empty">Add source files, then generate a starting recipe.</div>';
   $('#recipe-status').textContent = state.dirty ? 'Unsaved recipe changes. Save before running.' : r ? 'Recipe saved. First-run suggestions should be checked against your project context.' : '';
   $('#recipe-json').value = r ? pretty(r) : '';
   $$('[data-type]').forEach(b => b.onchange = () => {
     const [ti, fi] = b.dataset.type.split(',').map(Number);
-    r.tables[ti].fields[fi].type = b.value;
-    r.tables[ti].fields[fi].inferred = false;
+    const field = r.tables[ti].fields[fi];
+    field.type = b.value;
+    field.inferred = false;
+    if (field.type !== 'decimal' && field.precision_mode === 'round') field.precision_mode = 'nonzero';
     markDirty();
   });
   $$('[data-required]').forEach(b => b.onchange = () => {
@@ -332,7 +335,7 @@ function renderRecipe() {
 
 function fieldRules(ti, fi) {
   const f = state.recipe.tables[ti].fields[fi];
-  openModal('Rules · ' + f.name, `<div class="form-grid"><label>Trim outer whitespace<input type="checkbox" id="rule-trim" ${f.trim!==false?'checked':''}></label><label>Missing markers · one per line<textarea id="rule-missing" rows="3">${esc((f.missing||[]).join('\n'))}</textarea></label><label>Allowed values · one per line<textarea id="rule-allowed" rows="3">${esc((f.allowed||[]).join('\n'))}</textarea></label><label>Category mapping · JSON object<textarea id="rule-mapping" rows="3">${esc(pretty(f.mapping||{}))}</textarea></label><label>Date format<select id="rule-date">${selectOptions([{value:'%Y-%m-%d',label:'YYYY-MM-DD'},{value:'%m/%d/%Y',label:'MM/DD/YYYY'},{value:'%d/%m/%Y',label:'DD/MM/YYYY'},{value:'%m-%d-%Y',label:'MM-DD-YYYY'},{value:'%d-%m-%Y',label:'DD-MM-YYYY'},{value:'%Y/%m/%d',label:'YYYY/MM/DD'}],f.date_format||'%Y-%m-%d')}</select></label><label>Decimal separator<select id="rule-decimal">${selectOptions(['.',','],f.decimal_separator||'.')}</select></label><label>Thousands separator<select id="rule-thousands">${selectOptions([{value:'',label:'None'},{value:',',label:'Comma'},{value:'.',label:'Dot'},{value:' ',label:'Space'}],f.thousands_separator||'')}</select></label><label>Explicit symbols to strip<input id="rule-symbols" value="${esc(f.strip_symbols||'')}" placeholder="e.g. $"></label><label>Minimum (optional)<input id="rule-min" value="${esc(f.min??'')}"></label><label>Maximum (optional)<input id="rule-max" value="${esc(f.max??'')}"></label></div><p>Dates and numeric formats are explicit. Amounts are never rounded or converted between currencies. Empty fields stay missing; no values are imputed.</p>`, () => {
+  openModal('Rules · ' + f.name, `<div class="form-grid"><label>Trim outer whitespace<input type="checkbox" id="rule-trim" ${f.trim!==false?'checked':''}></label><label>Missing markers · one per line<textarea id="rule-missing" rows="3">${esc((f.missing||[]).join('\n'))}</textarea></label><label>Allowed values · one per line<textarea id="rule-allowed" rows="3">${esc((f.allowed||[]).join('\n'))}</textarea></label><label>Category mapping · JSON object<textarea id="rule-mapping" rows="3">${esc(pretty(f.mapping||{}))}</textarea></label><label>Date format<select id="rule-date">${selectOptions([{value:'%Y-%m-%d',label:'YYYY-MM-DD'},{value:'%m/%d/%Y',label:'MM/DD/YYYY'},{value:'%d/%m/%Y',label:'DD/MM/YYYY'},{value:'%m-%d-%Y',label:'MM-DD-YYYY'},{value:'%d-%m-%Y',label:'DD-MM-YYYY'},{value:'%Y/%m/%d',label:'YYYY/MM/DD'}],f.date_format||'%Y-%m-%d')}</select></label><label>Decimal separator<select id="rule-decimal">${selectOptions(['.',','],f.decimal_separator||'.')}</select></label><label>Thousands separator<select id="rule-thousands">${selectOptions([{value:'',label:'None'},{value:',',label:'Comma'},{value:'.',label:'Dot'},{value:' ',label:'Space'}],f.thousands_separator||'')}</select></label><label>Explicit symbols to strip<input id="rule-symbols" value="${esc(f.strip_symbols||'')}" placeholder="e.g. $"></label><label>Minimum (optional)<input id="rule-min" value="${esc(f.min??'')}"></label><label>Maximum (optional)<input id="rule-max" value="${esc(f.max??'')}"></label></div><p>Timestamps use ISO date and time and are exported in UTC. Decimal rounding is available as a field setting. Empty fields stay missing.</p>`, () => {
     Object.assign(f, {
       trim: $('#rule-trim').checked,
       missing: $('#rule-missing').value.split('\n').filter(Boolean),
@@ -354,7 +357,7 @@ function fieldRules(ti, fi) {
     markDirty();
     renderRecipe();
   });
-  $('#modal-body .form-grid').insertAdjacentHTML('beforeend', `<label>Maximum decimal places<input id="rule-places" type="number" min="0" max="12" value="${f.decimal_places ?? 12}"></label><label>Precision policy<select id="rule-precision">${selectOptions([{value:'nonzero',label:'Ignore redundant trailing zeros'},{value:'strict',label:'Reject any extra fractional digit'}], f.precision_mode || 'nonzero')}</select></label><label>Canonical categories ignore case<input id="rule-case" type="checkbox" ${f.case_insensitive?'checked':''}></label><label>Require exact date padding<input id="rule-exact" type="checkbox" ${f.date_exact!==false?'checked':''}></label><label>Reject number sign characters<input id="rule-unsigned" type="checkbox" ${f.unsigned?'checked':''}></label>`);
+  $('#modal-body .form-grid').insertAdjacentHTML('beforeend', `<label>Maximum decimal places<input id="rule-places" type="number" min="0" max="12" value="${f.decimal_places ?? 12}"></label><label>Precision policy<select id="rule-precision">${selectOptions([{value:'nonzero',label:'Ignore redundant trailing zeros'},{value:'strict',label:'Reject any extra fractional digit'},...(f.type === 'decimal' ? [{value:'round',label:'Round to the selected decimal places'}] : [])], f.precision_mode || 'nonzero')}</select></label><label>Canonical categories ignore case<input id="rule-case" type="checkbox" ${f.case_insensitive?'checked':''}></label><label>Require exact date padding<input id="rule-exact" type="checkbox" ${f.date_exact!==false?'checked':''}></label><label>Reject number sign characters<input id="rule-unsigned" type="checkbox" ${f.unsigned?'checked':''}></label>`);
 }
 
 function sourceFormat(ti, si) {
@@ -363,19 +366,19 @@ function sourceFormat(ti, si) {
     assignment = table.sources[si];
   recipe.formats ||= {};
   let chosen = assignment.format || '';
-  const fields = table.fields.filter(f => ['date', 'decimal', 'integer'].includes(f.type));
+  const fields = table.fields;
 
   function draw() {
     const settings = recipe.formats[chosen]?.fields || {};
     const rows = fields.map((f, i) => {
       const s = {...f, ...settings[f.name]};
-      let controls;
+      let controls = '';
       if (f.type === 'date') {
         controls = `<label>Date format<select data-format-date="${i}">${selectOptions(['%Y-%m-%d','%m/%d/%Y','%d/%m/%Y','%m-%d-%Y','%d-%m-%Y','%Y/%m/%d'],s.date_format||'%Y-%m-%d')}</select></label><label>Exact date padding<input data-format-exact="${i}" type="checkbox" ${s.date_exact!==false?'checked':''}></label>`;
-      } else {
+      } else if (['decimal', 'integer'].includes(f.type)) {
         controls = `<label>Decimal separator<select data-format-decimal="${i}">${selectOptions(['.', ','],s.decimal_separator||'.')}</select></label><label>Thousands separator<select data-format-thousands="${i}">${selectOptions([{value:'',label:'None'},{value:',',label:'Comma'},{value:'.',label:'Dot'},{value:' ',label:'Space'}],s.thousands_separator||'')}</select></label><label>Symbols to strip<input data-format-symbols="${i}" value="${esc(s.strip_symbols||'')}"></label>`;
       }
-      return `<div class="note"><label><input data-format-enable="${i}" type="checkbox" ${settings[f.name]?'checked':''}> Override ${esc(f.name)} parsing</label><div class="form-grid">${controls}</div></div>`;
+      return `<div class="note"><label><input data-format-enable="${i}" type="checkbox" ${settings[f.name]?'checked':''}> Override ${esc(f.name)} parsing</label><div class="form-grid">${controls}<label>Additional missing markers · one per line<textarea data-format-missing="${i}" rows="2">${esc((settings[f.name]?.missing || []).join('\n'))}</textarea></label></div></div>`;
     }).join('');
     $('#modal-body').innerHTML = `<p>A named format can be reused across files and refreshes. Editing it changes every source that uses it. Business validation stays on the logical table.</p><div class="form-grid"><label>Reuse format<select id="format-existing">${selectOptions([{value:'',label:'Field defaults'}, ...Object.keys(recipe.formats)],chosen)}</select></label><label>Save format as<input id="format-name" maxlength="100" value="${esc(chosen)}" placeholder="e.g. US monthly export"></label></div>${rows}`;
     $('#format-existing').onchange = e => {
@@ -394,14 +397,18 @@ function sourceFormat(ti, si) {
     const overrides = {};
     fields.forEach((f, i) => {
       if (!$(`[data-format-enable="${i}"]`).checked) return;
-      overrides[f.name] = f.type === 'date' ? {
-        date_format: $(`[data-format-date="${i}"]`).value,
-        date_exact: $(`[data-format-exact="${i}"]`).checked
-      } : {
-        decimal_separator: $(`[data-format-decimal="${i}"]`).value,
-        thousands_separator: $(`[data-format-thousands="${i}"]`).value,
-        strip_symbols: $(`[data-format-symbols="${i}"]`).value
+      const fieldFormat = {
+        missing: $(`[data-format-missing="${i}"]`).value.split('\n').filter(Boolean)
       };
+      if (f.type === 'date') {
+        fieldFormat.date_format = $(`[data-format-date="${i}"]`).value;
+        fieldFormat.date_exact = $(`[data-format-exact="${i}"]`).checked;
+      } else if (['decimal', 'integer'].includes(f.type)) {
+        fieldFormat.decimal_separator = $(`[data-format-decimal="${i}"]`).value;
+        fieldFormat.thousands_separator = $(`[data-format-thousands="${i}"]`).value;
+        fieldFormat.strip_symbols = $(`[data-format-symbols="${i}"]`).value;
+      }
+      overrides[f.name] = fieldFormat;
     });
     recipe.formats[name] = {
       fields: overrides
@@ -727,7 +734,7 @@ function renderRun() {
     banner.textContent = run.message;
   } else if (m) {
     banner.classList.toggle('warn', m.status !== 'ready' || run.stale);
-    banner.textContent = (run.stale ? 'Saved result is stale: inputs, recipe, or decisions changed. Rerun. ' : m.status === 'incomplete' ? 'Incomplete project: some files could not be processed. ' : m.status === 'needs_review' ? 'Run saved with records requiring review. ' : 'Project reconciled. ') + `${fmt(m.input_rows)} parsed rows · ${fmt(m.review_rows)} need review.`;
+    banner.textContent = (run.stale ? 'Saved result is stale: inputs, recipe, or decisions changed. Rerun. ' : m.status === 'incomplete' ? 'Incomplete project: some files could not be processed. ' : m.malformed_rows_held ? 'Partial results. Malformed rows are held for review. ' : m.status === 'needs_review' ? 'Run saved with records requiring review. ' : 'Project reconciled. ') + `${fmt(m.input_rows)} parsed rows · ${fmt(m.review_rows)} need review.`;
   } else if (run) banner.textContent = run.message;
   $('#review-count').textContent = m ? fmt(m.review_rows) : '—';
   const populations = m ? [
@@ -849,7 +856,7 @@ function renderExport() {
     return;
   }
   const prefix = '/api' + projectPath() + '/runs/' + state.run.id;
-  $('#export-content').innerHTML = `${state.run.stale?'<div class="banner warn">This package belongs to an earlier configuration. Rerun to include your current changes.</div>':''}<div class="export-hero"><div><h2>${m.status==='ready'?'Your project package is ready.':m.status==='incomplete'?'Partial results · incomplete inputs':'Clean tables, with a review queue.'}</h2><p>Includes complete CSV tables, review and exclusion records, the source audit, exact totals, a data dictionary, your recipe, and a closed database snapshot.</p><span class="muted">Saved run ${esc(state.run.id)} · ${esc(m.finished)}</span></div><a class="primary" href="${prefix}/package">Download package ↓</a></div><div class="export-files">${['Review.xlsx',...Object.keys(m.output_hashes).filter(f=>f!=='Review.xlsx'),'manifest.json'].map(f=>`<a class="export-file" href="${prefix}/files/${encodeURIComponent(f)}"><span class="file-icon">${esc(f.split('.').pop().toUpperCase())}</span><b>${esc(f)}</b><span>↓</span></a>`).join('')}</div><p class="muted">The Excel workbook contains labeled previews of up to 1,000 records per table. CSV exports contain all records. Decimal values remain exact; currency and units follow your source definitions.</p>`;
+  $('#export-content').innerHTML = `${state.run.stale?'<div class="banner warn">This package belongs to an earlier configuration. Rerun to include your current changes.</div>':''}<div class="export-hero"><div><h2>${m.status==='ready'?'Your project package is ready.':m.status==='incomplete'?'Partial results · incomplete inputs':m.malformed_rows_held?'Partial results · malformed rows held':'Clean tables, with a review queue.'}</h2><p>Includes complete CSV tables, review and exclusion records, the source audit, exact totals, a data dictionary, your recipe, and a closed database snapshot.</p><span class="muted">Saved run ${esc(state.run.id)} · ${esc(m.finished)}</span></div><a class="primary" href="${prefix}/package">Download package ↓</a></div><div class="export-files">${['Review.xlsx',...Object.keys(m.output_hashes).filter(f=>f!=='Review.xlsx'),'manifest.json'].map(f=>`<a class="export-file" href="${prefix}/files/${encodeURIComponent(f)}"><span class="file-icon">${esc(f.split('.').pop().toUpperCase())}</span><b>${esc(f)}</b><span>↓</span></a>`).join('')}</div><p class="muted">The Excel workbook contains labeled previews of up to 1,000 records per table. CSV exports contain all records. Decimal outputs follow your recipe’s precision policy. Currency and units follow your source definitions.</p>`;
 }
 guarded(async () => {
   const s = await api('/session');

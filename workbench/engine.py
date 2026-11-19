@@ -9,7 +9,7 @@ from pathlib import Path
 import duckdb
 
 from .common import MAX_ROWS, VERSION, WorkbenchError, csv_safe_text, dumps, file_hash, lit, now, q, write_json
-from .ingest import META, stage_source
+from .ingest import MALFORMED_ROW, META, stage_source
 from .recipe import validate
 
 WHITESPACE = ''.join(chr(c) for c in list(range(9,14)) + list(range(28,33)) + [133,160,5760] + list(range(8192,8203)) + [8232,8233,8239,8287,12288])
@@ -27,6 +27,11 @@ def field_expr(field, original):
     kind = field["type"]
     if kind == "text":
         return raw, "FALSE"
+    if kind == 'timestamp':
+        pattern = r'[0-9]{4}-[0-9]{2}-[0-9]{2}[T ](?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9](?:\.[0-9]{1,6})?)?(?:Z|[+-](?:[01][0-9]|2[0-3]):?[0-5][0-9])?'
+        offset = f"regexp_matches({raw}, '([+-][0-9]{{2}}:?[0-9]{{2}}|Z)$')"
+        value = f"(CASE WHEN {offset} THEN try_cast({raw} AS TIMESTAMPTZ) AT TIME ZONE 'UTC' ELSE try_cast({raw} AS TIMESTAMP) END)"
+        return value, f"({raw} IS NOT NULL AND (NOT regexp_full_match({raw}, {lit(pattern)}) OR {value} IS NULL))"
     if kind == "date":
         fmt = lit(field.get('date_format', '%Y-%m-%d'))
         # Excel date cells arrive as ISO timestamps at midnight (2026-01-03T00:00:00).
@@ -52,10 +57,12 @@ def field_expr(field, original):
     sign = '' if field.get('unsigned') else '[+-]?'
     valid = f"regexp_full_match({value}, {lit(sign + '[0-9]+(?:\\.[0-9]+)?')})"
     fraction = f"split_part({value}, '.', 2)"
-    if field.get('precision_mode', 'nonzero') == 'nonzero':
+    policy = field.get('precision_mode', 'nonzero')
+    places = field.get('decimal_places', 12)
+    if policy == 'nonzero':
         fraction = f"rtrim({fraction}, '0')"
-    precision = f"length({fraction}) <= {field.get('decimal_places', 12)}"
-    converted = f"try_cast({value} AS DECIMAL(38,12))"
+    precision = 'TRUE' if policy == 'round' else f"length({fraction}) <= {places}"
+    converted = f"try_cast({value} AS DECIMAL({26 + places},{places}))" if policy == 'round' else f"try_cast({value} AS DECIMAL(38,12))"
     bad = f"({raw} IS NOT NULL AND ({grouping_bad} OR NOT {valid} OR NOT ({precision}) OR {converted} IS NULL))"
     if kind == "integer":
         bad = f"({bad} OR ({converted} IS NOT NULL AND ({converted} != trunc({converted}) OR try_cast({converted} AS BIGINT) IS NULL)))"
@@ -133,7 +140,8 @@ def process(recipe, sources, raw_root, decisions, runtime, output, progress=lamb
                 for assignment in table['sources']:
                     override = recipe.get('formats', {}).get(assignment.get('format'), {}).get('fields', {}).get(n, {})
                     if override:
-                        expr, invalid = field_expr({**field, **override}, q(n))
+                        override_field = {**field, **override, 'missing': field.get('missing', []) + override.get('missing', [])}
+                        expr, invalid = field_expr(override_field, q(n))
                         expressions.append(f"WHEN __source_id={lit(assignment['id'])} THEN {expr}")
                         invalids.append(f"WHEN __source_id={lit(assignment['id'])} THEN {invalid}")
                 expression = f"CASE {' '.join(expressions)} ELSE {default_expression} END" if expressions else default_expression
@@ -183,7 +191,8 @@ def process(recipe, sources, raw_root, decisions, runtime, output, progress=lamb
                 if f["type"] in ("decimal", "integer"):
                     value, populated = con.execute(f"SELECT sum({q(f['name'])}),count({q(f['name'])}) FROM {q(name)}").fetchone()
                     totals[f["name"]] = {"sum": str(value) if value is not None else None, "populated": populated}
-            manifest["tables"].append({"name": name, "input": sum(counts.values()), "accepted": counts.get("accepted", 0), "review": counts.get("review", 0), "excluded": counts.get("excluded", 0), "totals": totals})
+            malformed = con.execute(f"SELECT count(*) FROM {q('result_' + name)} WHERE __status='review' AND starts_with(__ingest_issue, ?)", [MALFORMED_ROW]).fetchone()[0]
+            manifest["tables"].append({"name": name, "input": sum(counts.values()), "accepted": counts.get("accepted", 0), "review": counts.get("review", 0), "excluded": counts.get("excluded", 0), "totals": totals, "malformed_rows_held": malformed})
             for field in fields:
                 n = field["name"]
                 missing, distinct = con.execute(f"SELECT count(*) FILTER (WHERE {q(n)} IS NULL),count(DISTINCT {q(n)}) FROM {q('result_' + name)}").fetchone()
@@ -217,6 +226,7 @@ def process(recipe, sources, raw_root, decisions, runtime, output, progress=lamb
         manifest["input_rows"] = total
         manifest["complete_inputs"] = not manifest["file_issues"]
         manifest["review_rows"] = sum(t["review"] for t in manifest["tables"])
+        manifest["malformed_rows_held"] = sum(t["malformed_rows_held"] for t in manifest["tables"])
         manifest["status"] = "incomplete" if manifest["file_issues"] else "needs_review" if manifest["review_rows"] else "ready"
         progress("Writing review workbook", 80)
         from .exports import write_workbook
