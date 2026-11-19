@@ -1,0 +1,14 @@
+{
+  "name": "WooCommerce Customer / Order / Coupon Export Orders CSV",
+  "strict_rows": true,
+  "grouped_orders": true,
+  "fields": {
+    "order_id": {"columns": ["order_number", "order_id"], "required": true},
+    "date": {"columns": ["order_date"], "type": "date", "formats": ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S %z", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"], "required": true},
+    "amount": {"columns": ["order_total"], "type": "money", "required": true},
+    "currency": {"columns": ["order_currency", "currency"], "required": true},
+    "email": {"columns": ["billing_email"]},
+    "postcode": {"columns": ["billing_postcode"]}
+  },
+  "verify": "Choose the extension's order CSV profile with these fields. Verify the headings and ensure Stripe order metadata uses the same order number."
+}

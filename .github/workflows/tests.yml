@@ -33,7 +33,8 @@ jobs:
           python-version: '3.12'
       - name: Verify the release download
         run: |
-          $zip = Get-ChildItem deliverables/Data-Workbench-*.zip | Select-Object -First 1
+          $version = python -B -c "from workbench.common import VERSION; print(VERSION)"
+          $zip = Get-Item -LiteralPath "deliverables/Data-Workbench-$version.zip" -ErrorAction Stop
           $record = Get-Content ($zip.FullName -replace '\.zip$', '.json') | ConvertFrom-Json
           if ((Get-FileHash $zip.FullName -Algorithm SHA256).Hash -ne $record.sha256.ToUpper()) { throw 'Release zip does not match its recorded hash.' }
           python tools/clean_install_check.py --archive $zip.FullName --workdir "$env:RUNNER_TEMP\clean" --python "${{ steps.python.outputs.python-path }}" --evidence "$env:RUNNER_TEMP\clean\evidence.json"

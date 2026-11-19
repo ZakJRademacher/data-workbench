@@ -283,6 +283,51 @@ def score(store, result):
     }
 
 
+def order_trial(seed):
+    """Build shuffled order and payment records with independently declared outcomes."""
+    rng = random.Random(seed)
+    day = date(2026, 10, rng.randint(1, 23))
+    amount = Decimal(rng.randint(4500, 20000)) / 100
+    half = (amount / 3).quantize(Decimal('0.01'))
+    direct, corroborated, split, unpaid, missing, left, right = [
+        {'order_id': name, 'source': f'orders:{i}', 'date': day, 'amount': amount,
+         'currency': 'USD', 'email': f'{name}@example.test'}
+        for i, name in enumerate(('direct', 'corroborated', 'split', 'unpaid', 'missing', 'left', 'right'), 1)
+    ]
+    left['email'] = right['email'] = 'shared@example.test'
+
+    def payment(i, paid, **evidence):
+        return {'source': f'payments:{i}', 'transaction_id': f'txn_{i}', 'kind': 'charge', 'amount': paid,
+                'currency': 'USD', 'date': day + timedelta(days=rng.randint(0, 7)), **evidence}
+
+    payments = [
+        payment(1, amount, order_id='direct'),
+        payment(2, amount, email=corroborated['email']),
+        payment(3, half, email=split['email']),
+        payment(4, amount - half, email=split['email']),
+        payment(5, amount, order_id='absent'),
+        payment(6, amount, email=left['email']),
+        payment(7, amount, email=right['email']),
+        payment(8, amount),
+        payment(9, -half, parent_id='txn_1'),
+        payment(10, -half),
+    ]
+    payments[7]['date'] = day + timedelta(days=8)
+    missing['date'] = day + timedelta(days=8)
+    unpaid['date'] = day - timedelta(days=8)
+    payments[8]['kind'] = payments[9]['kind'] = 'refund'
+    orders = [direct, corroborated, split, unpaid, missing, left, right]
+    rng.shuffle(orders)
+    rng.shuffle(payments)
+    return orders, payments, {
+        'matches': {'direct': {'payments:1'}, 'corroborated': {'payments:2'}, 'split': {'payments:3', 'payments:4'}},
+        'refunds': {'payments:9': 'payments:1'},
+        'statuses': {'direct': 'matched', 'corroborated': 'matched', 'split': 'matched', 'unpaid': 'unpaid',
+                     'missing': 'review', 'left': 'review', 'right': 'review'},
+        'exceptions': {'ORDER_UNPAID', 'AMBIGUOUS', 'CHARGE_NO_ORDER', 'REFUND_NO_CHARGE'},
+    }
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, required=True)

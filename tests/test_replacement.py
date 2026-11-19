@@ -66,6 +66,10 @@ def test_inferred_numeric_value_with_later_leading_zero_goes_to_review(store,tmp
     pid=store.create('Full-column validation')['id']
     content='counter,value\n'+''.join(f'{i},plain\n' for i in range(1,220))+'0009,plain\n'
     add_csv(store,pid,tmp_path,'rows.csv',content);recipe=store.set_recipe(pid)
+    counter = next(f for f in recipe['tables'][0]['fields'] if f['name'] == 'counter')
+    assert counter['type'] == 'text'
+    # A saved recipe from an earlier inspection can still have an inferred integer.
+    counter.update(type='integer', inferred=True)
     recipe['tables'][0]['duplicate_policy']='keep_all';store.set_recipe(pid,recipe)
     result=completed(store,pid)
     assert result['manifest']['tables'][0]['review']==1

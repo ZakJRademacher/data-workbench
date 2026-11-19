@@ -4,7 +4,7 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[View the workspace](docs/images/review-2.0.1.png) · [Download version 2.0.2](https://github.com/ZakJRademacher/data-workbench/raw/refs/heads/main/deliverables/Data-Workbench-2.0.2.zip) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[Download for Windows (2.2.1)](https://github.com/ZakJRademacher/data-workbench/releases/download/v2.2.1/Data-Workbench-2.2.1.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
@@ -12,7 +12,7 @@ The preparation steps stay visible and repeatable. The app keeps original files,
 
 On Windows, install standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/), including its launcher or PATH option. Download and fully extract the ZIP into a writable folder, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. The first launch needs internet access and installs pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
 
-The launcher and extracted download were tested with a separate Python 3.13.9 installation. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`; the double-click launcher was verified on Windows only.
+The Windows clean-install check extracts the download, starts the launcher with Python 3.12, and runs the built-in demo. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`.
 
 Choose **Explore the demo** for a fictional customer, order, and payment project, or **Create a project** to add your own files.
 
@@ -20,9 +20,9 @@ Choose **Explore the demo** for a fictional customer, order, and payment project
 
 - Profiles CSV and `.xlsx` sources; lets you choose worksheet, header, delimiter, and encoding.
 - Appends compatible exports through editable source-to-field mappings.
-- Applies saved types, whitespace and category rules, reusable per-source date/number formats, required fields, bounds, decimal scale, and cross-field comparisons.
+- Applies saved types, UTC timestamp conversion, whitespace and category rules, reusable per-source formats and missing markers, required fields, decimal scale and opt-in rounding, and cross-field comparisons.
 - Keeps identifiers as text, uses exact decimals, and preserves source bytes and record references.
-- Flags conflicting keys, invalid records, and repeated records. Saves corrections and explicit exclusions separately from original files.
+- Flags conflicting keys, invalid records, and repeated records. An optional source setting holds safely readable malformed rows for review. Saves corrections and exclusions separately from original files.
 - Suggests exact-key relationships, previews unmatched and output row counts, and requires approval before publishing combined views.
 - Aggregates child tables before joins when necessary to preserve the base table's grain.
 - Exports complete CSVs, a review workbook, the audit, the recipe, review decisions, a data dictionary, a closed DuckDB snapshot, and a hash manifest.
@@ -33,6 +33,22 @@ Choose **Explore the demo** for a fictional customer, order, and payment project
 The first run has **20 input records = 14 accepted + 6 needing review**. Accepted order amount is **460.8500 source units**; accepted payment amount is **455.9750 source units**. Orders and payments have different accepted records at this stage, so these two totals are not an all-order/payment reconciliation.
 
 There are two conflicting customer copies, one ambiguous order date, one invalid amount, and two copies of the same order. The fixtures are original fictional data, with no assumed currency. See [the operating guide](docs/OPERATING_GUIDE.md) for the demo walkthrough and expected results.
+
+## Try payout reconciliation
+
+The command-line reconciliation preview matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. Version 2.2.0 can use an earlier monthly close to distinguish a payout that remains open from one already booked. The QuickBooks profile was verified against native CSV and Excel exports from Intuit's sample company. Stripe and paired-export verification remains open.
+
+After the first Windows launch, open PowerShell in the extracted `data-workbench` folder. These commands use the environment set up by the launcher:
+
+```powershell
+$workbenchPython = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv\Scripts\python.exe'
+& $workbenchPython -X utf8 -m workbench.recon.synth --out recon-demo
+& $workbenchPython -X utf8 -m workbench.recon --payouts recon-demo/stripe_payouts.csv --itemized recon-demo/stripe_itemized.csv --books recon-demo/quickbooks.csv --period 2026-10 --out recon-results
+```
+
+Open `recon-results/summary.md` to read the tie-out and review items. [Matching rules, test evidence, and limits](docs/RECONCILIATION_DESIGN.md#phase-1-status).
+
+It also matches Shopify orders to Shopify Payments and WooCommerce orders to Stripe charges. It checks order references, currency, amount, and customer evidence; ambiguous cases go to review, and disputes are tied to their orders. On 98,285 real Olist orders with the order IDs hidden it matched 99.24% automatically with no wrong matches. The two store export layouts were built from the platforms' documentation and still need checking against native exports. [Match store orders](docs/RECONCILIATION_DESIGN.md#match-store-orders-to-payments) · [Carry a payout close forward](docs/RECONCILIATION_DESIGN.md#carry-state-into-next-months-payout-reconciliation)
 
 ## Limits and interpretation
 
@@ -51,7 +67,7 @@ It needs the optional `anthropic` package: `pip install anthropic`.
 
 ## Implementation and checks
 
-**Real-data regression suite.** Every push runs a slice of four public datasets through the app on Linux and Windows, and every night runs all 1,554,645 rows. Each count, total, join gap and exported value is compared with an [independent reference implementation](realdata/oracle.py) that uses only Python's standard library. Datasets are pinned by URL and SHA-256. [How it works](realdata/README.md).
+**Real-data regression suite.** Every push runs a slice of four public datasets through the app on Linux and Windows, and every night runs all 1,554,645 rows. Each count, total, join gap and exported value is compared with an [independent reference implementation](https://github.com/ZakJRademacher/data-workbench/blob/main/realdata/oracle.py) that uses only Python's standard library. Datasets are pinned by URL and SHA-256. [How it works](https://github.com/ZakJRademacher/data-workbench/tree/main/realdata).
 
 [Architecture and API](docs/TECHNICAL.md) · [Operating guide](docs/OPERATING_GUIDE.md) · [Verification](docs/QA.md) · [Benchmark reproduction](docs/BENCHMARKS.md) · [Dependency licenses](licenses/README.md)
 

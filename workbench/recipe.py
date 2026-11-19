@@ -9,9 +9,9 @@ from .common import MAX_COLUMNS, WorkbenchError, identifier
 ALIASES = {"cust_id": "customer_id", "customer_number": "customer_id", "customer_no": "customer_id",
            "order_number": "order_id", "order_no": "order_id", "payment_number": "payment_id",
            "customer_name": "name", "sale_amount": "amount", "order_total": "amount"}
-TYPES = {"text", "integer", "decimal", "date"}
+TYPES = {"text", "integer", "decimal", "date", "timestamp"}
 DATE_FORMATS = {"%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%m-%d-%Y", "%d-%m-%Y", "%Y/%m/%d"}
-FORMAT_FIELDS = {'date_format', 'date_exact', 'decimal_separator', 'thousands_separator', 'strip_symbols'}
+FORMAT_FIELDS = {'date_format', 'date_exact', 'decimal_separator', 'thousands_separator', 'strip_symbols', 'missing'}
 
 
 def migrate(recipe):
@@ -61,7 +61,10 @@ def _validate(recipe, sources):
             raise WorkbenchError('Each named format needs a fields object.')
         for settings in fmt.get('fields', {}).values():
             if not isinstance(settings, dict) or not set(settings).issubset(FORMAT_FIELDS):
-                raise WorkbenchError('Source formats may override date and number parsing only.')
+                raise WorkbenchError('Source formats may override parsing only, including missing markers.')
+            missing = settings.get('missing', [])
+            if not isinstance(missing, list) or not all(isinstance(value, str) for value in missing):
+                raise WorkbenchError('Source missing markers must be a list of text values.')
             if settings.get('date_format', '%Y-%m-%d') not in DATE_FORMATS:
                 raise WorkbenchError('Unknown source date format.')
             if settings.get('decimal_separator', '.') not in ('.', ',') or settings.get('thousands_separator', '') not in ('', '.', ',', ' '):
@@ -87,11 +90,12 @@ def _validate(recipe, sources):
                 raise WorkbenchError("Field names must be unique lowercase identifiers, up to 60 characters.")
             names.add(fname)
             if field.get("type") not in TYPES:
-                raise WorkbenchError("Field types are Text, Whole number, Decimal, or Date.")
+                raise WorkbenchError("Field types are Text, Whole number, Decimal, Date, or Timestamp.")
             if not isinstance(field.get('decimal_places', 12), int) or not 0 <= field.get('decimal_places', 12) <= 12:
                 raise WorkbenchError('Decimal places must be an integer between 0 and 12.')
-            if field.get('precision_mode', 'nonzero') not in ('strict', 'nonzero'):
-                raise WorkbenchError('Precision mode must be strict or nonzero.')
+            policy = field.get('precision_mode', 'nonzero')
+            if policy not in ('strict', 'nonzero', 'round') or (policy == 'round' and field['type'] != 'decimal'):
+                raise WorkbenchError('Choose rounding only for decimal fields.')
             for attr in ('case_insensitive', 'date_exact', 'unsigned', 'inferred'):
                 if attr in field and not isinstance(field[attr], bool):
                     raise WorkbenchError(f'{attr} must be true or false.')

@@ -127,6 +127,8 @@ def configure_flights(recipe):
     for t in recipe["tables"]:
         for f in t["fields"]:
             f["missing"] = ["NA"]
+    for n in ("distance", "arr_delay", "dep_delay", "air_time"):
+        field(recipe, "flights", n).update(type="integer", inferred=False)
     for n in ("temp", "dewp", "humid", "precip", "pressure", "visib"):
         field(recipe, "weather", n)["type"] = "decimal"
     field(recipe, "weather", "wind_dir")["type"] = "integer"
@@ -251,3 +253,21 @@ def test_cp1252_detected_beyond_sample(cache, work, run):
     t = manifest["tables"][0]
     assert t["input"] == t["accepted"] == expected["rows"]
     assert sorted(r["name"] for r in read_csv(out / f"{t['name']}.csv")) == expected["names"]
+
+
+# --- Order-to-payment matching on real orders with the shared ID hidden ---------------------
+
+def test_order_matching_on_real_payments_never_picks_the_wrong_order(cache, work):
+    from realdata.conftest import REPORT
+    from workbench.recon import orders as order_matching
+    sales, charges, truth = oracle.olist_blind_payments(inputs.olist(cache, work, FULL))
+    result = order_matching.reconcile(sales, charges, use_postcode=True)
+    pairs = [(t, m["order"]) for m in result["matches"] for t in m["transactions"]]
+    wrong = [(t, order) for t, order in pairs if truth[t] != order]
+    statuses = {}
+    for o in result["orders"]:
+        statuses[o["status"]] = statuses.get(o["status"], 0) + 1
+    REPORT["cases"]["olist_blind_order_matching"] = {"orders": len(sales), "matched": len(pairs), "wrong": len(wrong),
+                                                     "statuses": statuses}
+    assert wrong == [], wrong[:5]
+    assert len(pairs) >= 0.95 * len(sales)  # measured 99.24% on the full data; the 7-day window misses late approvals
