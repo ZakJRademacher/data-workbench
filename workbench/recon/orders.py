@@ -18,6 +18,8 @@ PROFILES = {
     'woocommerce-stripe': ('woocommerce_orders', 'stripe_order_payments'),
 }
 MATCH_DAYS = 7
+HANDLED = {'charge', 'payment', 'sale', 'capture', 'refund'}
+DISPUTE = re.compile(r'dispute|chargeback', re.I)
 
 
 def order_key(value):
@@ -86,9 +88,13 @@ def reconcile(orders, payments, use_postcode=True):
 
     ids, unidentified = set(), set()
     explicit, fuzzy, reversed_items = defaultdict(list), [], []
+    disputes, unhandled = [], defaultdict(list)
     for payment in payments:
         kind = payment['kind'].casefold()
-        if kind not in {'charge', 'payment', 'sale', 'capture', 'refund'}:
+        if kind not in HANDLED:
+            # Nothing is dropped silently: disputes are tied to their orders below, and any other
+            # transaction type is summarised so the export's full contents stay accounted for.
+            (disputes.append(payment) if DISPUTE.search(kind) else unhandled[kind].append(payment))
             continue
         transaction_id = payment.get('transaction_id')
         signature = tuple(sorted((field, value) for field, value in payment.items() if field != 'source'))
@@ -210,8 +216,32 @@ def reconcile(orders, payments, use_postcode=True):
         refunds.append({'order': order['order_id'], 'transaction': payment['source'], 'charge': parent['source'],
                         'amount': str(abs(amount)), 'currency': order['currency'].upper()})
 
+    disputed = set()
+    for payment in disputes:
+        direct = order_key(payment.get('order_id'))
+        parents = charge_refs.get(payment.get('parent_id') or payment.get('payment_reference'), [])
+        key = direct if direct in by_order else charge_matches[parents[0]['source']] if len(parents) == 1 else None
+        amount = f"{payment['amount']} {payment['currency'].upper()}"
+        if key:
+            disputed.add(key)
+            exceptions.append({'code': 'DISPUTE', 'orders': [by_order[key]['order_id']], 'transactions': [payment['source']],
+                               'detail': f"{payment['kind']} of {amount} against this order's payment. The order stays "
+                                         'matched, but the money may be reversed: check the dispute outcome.'})
+        else:
+            exceptions.append({'code': 'DISPUTE', 'orders': [], 'transactions': [payment['source']],
+                               'detail': f"{payment['kind']} of {amount} that can't be traced to a matched order's charge."})
+    for kind, items in sorted(unhandled.items()):
+        totals = defaultdict(Decimal)
+        for item in items:
+            totals[item['currency'].upper()] += item['amount']
+        exceptions.append({'code': 'UNHANDLED_TRANSACTIONS', 'orders': [], 'transactions': [p['source'] for p in items],
+                           'detail': f"{len(items)} '{kind}' row(s) totalling "
+                                     + ', '.join(f"{v} {c}" for c, v in sorted(totals.items()))
+                                     + " aren't order payments, refunds or disputes, so they were not matched to orders."})
+
     return {'matches': matches, 'refunds': refunds, 'exceptions': exceptions,
-            'orders': [{'order': o['order_id'], 'source': o['source'], 'status': order_status[k]}
+            'orders': [{'order': o['order_id'], 'source': o['source'], 'status': order_status[k],
+                        **({'disputed': True} if k in disputed else {})}
                        for k, o in by_order.items()]}
 
 
@@ -243,5 +273,6 @@ def main(argv):
     statuses = [o['status'] for o in result['orders']]
     print(f"{len(statuses)} orders. {statuses.count('matched')} matched. "
           f"{statuses.count('review')} in review. {statuses.count('unpaid')} without a charge. "
+          f"{sum(o.get('disputed', False) for o in result['orders'])} disputed. "
           f"{len(result['exceptions'])} exceptions.")
     return 0
