@@ -4,7 +4,7 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[Download for Windows (2.2.0)](https://github.com/ZakJRademacher/data-workbench/releases/download/v2.2.0/Data-Workbench-2.2.0.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[Download for Windows (2.2.1)](https://github.com/ZakJRademacher/data-workbench/releases/download/v2.2.1/Data-Workbench-2.2.1.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
