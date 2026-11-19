@@ -19,6 +19,7 @@ Full mode also checks published facts about each dataset, such as Olist's 99,441
 | Excel exports | `.xlsx` with real date and timestamp cells | Date cells convert to dates; real times of day go to review |
 | OurAirports | 86,343 rows | Every exported text value equals the source, including southern-hemisphere coordinates that start with `-` |
 | Windows-1252 | US airports, first accent past 128 KB | Encoding detected; every row and name intact |
+| Order matching | Olist orders and payments with the order IDs hidden | The order-to-payment matcher makes no wrong matches and matches at least 95% (99.24% on the full data) |
 
 The last three cases guard against the bugs fixed in 2.0.2. Run against the 2.0.1 code, exactly those three tests fail and the rest pass. Disabling the double-counting guard or breaking duplicate removal also makes the matching test fail.
 
