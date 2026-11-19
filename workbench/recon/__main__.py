@@ -46,6 +46,9 @@ def write_report(result, out, inputs, settings):
     lines += [f"- {'✓' if ok else '✕'} {label}" for label, ok in checks] + [""]
     if earlier := result.counts.get('settled_from_prior_period'):
         lines += [f"{earlier} earlier payouts were settled in this run and are listed separately from the current month's totals.", ""]
+    if still := result.counts.get('still_open_from_prior'):
+        lines += [f"**{still} payout(s) from earlier months are still not deposited, totalling "
+                  f"${t['still_open_from_prior_total']:,.2f}.** They are listed below until they're settled.", ""]
     if result.exceptions:
         ref = lambda e: "<br>".join(e["payouts"] + [f"books row {d.rsplit(':', 1)[1]}" for d in e["deposits"]])
         lines += ["## Needs attention", "", "| Code | Records | Amount | Detail | What to do |", "|---|---|---:|---|---|"]
@@ -116,7 +119,7 @@ def main(argv=None):
     inputs = [p for p in (args.payouts, args.itemized, args.books) if p]
     write_report(result, args.out, inputs, settings)
     if args.close_account and result.tieout['unexplained'] == 0:
-        close.save_close(args.out / 'close-state.json', args.close_account, currency, settings, payouts.records, result, prior,
+        close.save_close(args.out / 'close-state.json', args.close_account, currency, settings, result.payouts, result, prior,
                          inputs + ([args.prior_close] if args.prior_close else []))
     print((args.out / "summary.md").read_text(encoding="utf-8"))
     return 0 if result.tieout["unexplained"] == 0 else 1

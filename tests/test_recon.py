@@ -243,3 +243,43 @@ def test_saved_close_distinguishes_previously_booked_and_open_payouts(tmp_path):
     assert 'PRIOR_PERIOD_BOOKED' in {e['code'] for e in report['exceptions']}
     assert report['counts']['settled_from_prior_period'] == 1
     assert close_month('2026-10', tmp_path / 'wrong', account='Other account', prior=state) == 2
+
+
+def _close(tmp_path, folder, period, payouts, books, prior=None):
+    payout_csv, books_csv = tmp_path / f'{folder}-payouts.csv', tmp_path / f'{folder}-books.csv'
+    payout_csv.write_text('id,Amount,Arrival Date,Currency\n' + payouts, encoding='utf-8')
+    books_csv.write_text('Date,Transaction Type,Name,Memo,Amount\n' + books, encoding='utf-8')
+    out = tmp_path / folder
+    code = cli(['--payouts', str(payout_csv), '--books', str(books_csv), '--period', period, '--out', str(out),
+                '--close-account', 'Operating USD'] + (['--prior-close', str(prior)] if prior else []))
+    report = json.loads((out / 'result.json').read_text(encoding='utf-8'))
+    saved = json.loads((out / 'close-state.json').read_text(encoding='utf-8')) if (out / 'close-state.json').exists() else None
+    return code, report, saved, out
+
+
+@pytest.mark.parametrize('still_exported', [True, False], ids=['in-export', 'only-in-close'])
+def test_an_undeposited_payout_stays_visible_until_it_is_settled(tmp_path, still_exported):
+    lost = 'po_LOSTAAAA,250.00,2026-09-29,USD\n'
+    _, sept, sept_state, _ = _close(tmp_path, 'sep', '2026-09', lost, '09/15/2026,Deposit,Customer check,,40.00\n')
+    assert [e['code'] for e in sept['exceptions']] == ['PAYOUT_IN_TRANSIT']
+    code, octo, oct_state, out = _close(tmp_path, 'oct', '2026-10', (lost if still_exported else '') + 'po_OCTBAAAA,80.00,2026-10-06,USD\n',
+                                        '10/07/2026,Deposit,Stripe,po_OCTBAAAA,80.00\n', tmp_path / 'sep' / 'close-state.json')
+    assert code == 0
+    assert [(e['code'], e['payouts']) for e in octo['exceptions']] == [('PAYOUT_STILL_OPEN', ['po_LOSTAAAA'])]
+    assert octo['counts']['still_open_from_prior'] == 1 and D(octo['tieout']['still_open_from_prior_total']) == D('250.00')
+    assert 'still not deposited, totalling $250.00' in (out / 'summary.md').read_text(encoding='utf-8')
+    assert oct_state['payouts']['po_LOSTAAAA']['state'] == 'open'
+    # Five weeks late, the deposit arrives and settles it.
+    _, nov, nov_state, _ = _close(tmp_path, 'nov', '2026-11', 'po_NOVAAAAA,10.00,2026-11-02,USD\n',
+                                  '11/03/2026,Deposit,Stripe,po_LOSTAAAA,250.00\n11/03/2026,Deposit,Stripe,po_NOVAAAAA,10.00\n',
+                                  tmp_path / 'oct' / 'close-state.json')
+    assert sorted(m['payouts'][0] for m in nov['matches']) == ['po_LOSTAAAA', 'po_NOVAAAAA'] and nov['exceptions'] == []
+    assert nov_state['payouts']['po_LOSTAAAA']['state'] == 'booked'
+
+
+def test_a_payout_export_that_disagrees_with_the_prior_close_is_flagged(tmp_path):
+    _close(tmp_path, 'sep', '2026-09', 'po_LOSTAAAA,250.00,2026-09-29,USD\n', '09/15/2026,Deposit,Customer check,,40.00\n')
+    _, octo, _, _ = _close(tmp_path, 'oct', '2026-10', 'po_LOSTAAAA,205.00,2026-09-29,USD\n', '10/12/2026,Deposit,Customer check,,5.00\n',
+                           tmp_path / 'sep' / 'close-state.json')
+    assert [(e['code'], e['payouts']) for e in octo['exceptions']] == [('PRIOR_CLOSE_MISMATCH', ['po_LOSTAAAA'])]
+    assert '$250.00' in octo['exceptions'][0]['detail'] and '$205.00' in octo['exceptions'][0]['detail']
