@@ -9,8 +9,8 @@ from packaging.requirements import Requirement
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main():
-    pending=['fastapi','uvicorn','python-multipart','duckdb','openpyxl']
+def closure(roots):
+    pending=list(roots)
     found={}
     while pending:
         name=pending.pop().lower().replace('_','-')
@@ -21,7 +21,17 @@ def main():
             req=Requirement(line)
             if req.marker is None or req.marker.evaluate({'extra':''}):
                 pending.append(req.name)
-    (ROOT/'requirements.lock.txt').write_text('\n'.join(f'{name}=={d.version}' for name,d in sorted(found.items()))+'\n',encoding='utf-8')
+    return found
+
+
+def main():
+    # Run on Windows: the desktop window (pywebview and its .NET bridge) is Windows-only, so the
+    # packages only it needs are pinned with a win32 marker and other systems skip them.
+    shared=closure(['fastapi','uvicorn','python-multipart','duckdb','openpyxl'])
+    found={**shared,**closure(['pywebview'])}
+    def pin(name,d):
+        return f'{name}=={d.version}'+('' if name in shared else '; sys_platform == "win32"')
+    (ROOT/'requirements.lock.txt').write_text(''.join(pin(name,d)+'\n' for name,d in sorted(found.items())),encoding='utf-8')
     license_dir=ROOT/'licenses';license_dir.mkdir(exist_ok=True)
     summaries=[]
     for name,dist in sorted(found.items()):

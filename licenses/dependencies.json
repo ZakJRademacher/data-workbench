@@ -18,9 +18,27 @@
     "license_texts_captured": 1
   },
   {
+    "name": "bottle",
+    "version": "0.13.4",
+    "license": "MIT",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "cffi",
+    "version": "2.1.1",
+    "license": "MIT-0",
+    "license_texts_captured": 1
+  },
+  {
     "name": "click",
     "version": "8.5.0",
     "license": "BSD-3-Clause",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "clr-loader",
+    "version": "0.3.1",
+    "license": "See package metadata and included texts.",
     "license_texts_captured": 1
   },
   {
@@ -66,6 +84,18 @@
     "license_texts_captured": 1
   },
   {
+    "name": "proxy-tools",
+    "version": "0.1.0",
+    "license": "MIT",
+    "license_texts_captured": 0
+  },
+  {
+    "name": "pycparser",
+    "version": "3.12",
+    "license": "BSD-3-Clause",
+    "license_texts_captured": 1
+  },
+  {
     "name": "pydantic",
     "version": "2.14.2",
     "license": "MIT",
@@ -81,6 +111,18 @@
     "name": "python-multipart",
     "version": "0.0.32",
     "license": "Apache-2.0",
+    "license_texts_captured": 1
+  },
+  {
+    "name": "pythonnet",
+    "version": "3.2.1",
+    "license": "MIT",
+    "license_texts_captured": 2
+  },
+  {
+    "name": "pywebview",
+    "version": "6.2.1",
+    "license": "BSD 3-Clause License\n\nCopyright (c) 2014-2017, Roman Sirokov\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of the copyright holder nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n",
     "license_texts_captured": 1
   },
   {

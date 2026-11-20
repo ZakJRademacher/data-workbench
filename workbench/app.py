@@ -44,6 +44,15 @@ def create_app(project_root=None):
         host = request.headers.get("host", "")
         if host.split(":")[0] not in ("127.0.0.1", "localhost", "testserver"):
             return response({"error": "Localhost requests only."}, 403)
+        if request.url.path == "/api/desktop/focus":
+            # A second desktop launch asks this one to show its window (see workbench.desktop).
+            key = getattr(app.state, "desktop_key", None)
+            focus = getattr(app.state, "desktop_focus", None)
+            if request.method != "POST" or not key or not secrets.compare_digest(request.headers.get("x-workbench-desktop", ""), key):
+                return response({"error": "Not available."}, 403)
+            if focus:
+                focus()
+            return Response(status_code=204)
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             if request.headers.get("x-workbench-token") != app.state.token:
                 return response({"error": "Reopen the app to refresh its local session."}, 403)
