@@ -1,7 +1,7 @@
 {
   "filename": "Data-Workbench-2.2.2.zip",
   "files": 145,
-  "bytes": 3001244,
-  "sha256": "fe0caf0acf475222947c8c9571987a7a5679c996b95b2b49b783858fb321e373",
+  "bytes": 3002167,
+  "sha256": "b1bda4e02ac69b0d7291ad056f9954a71ae6cf0802afa2381928790b04989bb9",
   "excluded": "Private projects, raw external datasets, environments, caches, local paths, and repository administration."
 }
