@@ -10,9 +10,11 @@ The preparation steps stay visible and repeatable. The app keeps original files,
 
 ## Open the app
 
-On Windows, install standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/), including its launcher or PATH option. Download and fully extract the ZIP into a writable folder, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. The first launch needs internet access and installs pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
+On 64-bit Windows, download `Data-Workbench-<version>-windows-x64.zip`. Fully extract it into a writable folder with a short path, such as `C:\DataWorkbench`, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The ZIP carries its own Python 3.14 and the pinned dependencies in `runtime\python`, so nothing needs to be installed and the first launch works offline. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. To upgrade, stop the app, extract the new version into a new folder, and copy your `projects` folder across.
 
-The Windows clean-install check extracts the download, starts the launcher with Python 3.12, and runs the built-in demo. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`.
+The smaller `Data-Workbench-<version>.zip` holds the same app without Python. It needs standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/). Its first launch needs internet access and installs the pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
+
+On every push, Windows clean-install checks extract both downloads and run the built-in demo: the bundled download with every installed Python hidden, and the smaller one with Python 3.12. On other operating systems, create a Python virtual environment, install `requirements.lock.txt`, and run `python -m workbench.app`.
 
 Choose **Explore the demo** for a fictional customer, order, and payment project, or **Create a project** to add your own files.
 
@@ -38,10 +40,10 @@ There are two conflicting customer copies, one ambiguous order date, one invalid
 
 The command-line reconciliation preview matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. Version 2.2.0 can use an earlier monthly close to distinguish a payout that remains open from one already booked. The QuickBooks profile was verified against native CSV and Excel exports from Intuit's sample company. Stripe and paired-export verification remains open.
 
-After the first Windows launch, open PowerShell in the extracted `data-workbench` folder. These commands use the environment set up by the launcher:
+After the first Windows launch, open PowerShell in the extracted `data-workbench` folder. These commands use the Python the launcher uses, bundled or set up on first launch:
 
 ```powershell
-$workbenchPython = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv\Scripts\python.exe'
+$workbenchPython = if (Test-Path runtime\python\python.exe) { Resolve-Path runtime\python\python.exe } else { Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv\Scripts\python.exe' }
 & $workbenchPython -X utf8 -m workbench.recon.synth --out recon-demo
 & $workbenchPython -X utf8 -m workbench.recon --payouts recon-demo/stripe_payouts.csv --itemized recon-demo/stripe_itemized.csv --books recon-demo/quickbooks.csv --period 2026-10 --out recon-results
 ```

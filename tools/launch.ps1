@@ -2,8 +2,16 @@ param([switch]$Check, [switch]$NoBrowser, [string]$PythonPath, [string]$Environm
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($EnvironmentRoot) { $environmentRoot = [IO.Path]::GetFullPath($EnvironmentRoot) } else { $environmentRoot = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv' }
-$environmentPython = Join-Path $environmentRoot 'Scripts\python.exe'
 $requirements = Join-Path $projectRoot 'requirements.lock.txt'
+# The Windows download carries its own Python and dependencies in runtime\python.
+# Use it as shipped: no system Python, venv, pip or internet access.
+$portableMarker = Join-Path $projectRoot 'runtime\portable.json'
+$portable = Test-Path -LiteralPath $portableMarker
+if ($portable) {
+    $environmentPython = Join-Path $projectRoot 'runtime\python\python.exe'
+    if (-not (Test-Path -LiteralPath $environmentPython)) { throw 'The bundled Python is missing. Extract the whole ZIP again into a new folder, then copy your projects folder across.' }
+} else {
+$environmentPython = Join-Path $environmentRoot 'Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $environmentPython)) {
     $basePython = $PythonPath
     if (-not $basePython -and $env:DATA_WORKBENCH_PYTHON) { $basePython = $env:DATA_WORKBENCH_PYTHON }
@@ -38,8 +46,12 @@ if ($expectedHash -ne $installedHash) {
     if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed. Check your internet connection and try again.' }
     Set-Content -LiteralPath $stamp -Value $expectedHash -Encoding ASCII
 }
-& $environmentPython -c "import fastapi, uvicorn, multipart, duckdb, openpyxl; print('Data Workbench dependencies ready.')"
-if ($LASTEXITCODE -ne 0) { throw 'The local environment needs repair. Remove its requirements.sha256 stamp and launch again.' }
+}
+& $environmentPython -B -c "import fastapi, uvicorn, multipart, duckdb, openpyxl; print('Data Workbench dependencies ready.')"
+if ($LASTEXITCODE -ne 0) {
+    if ($portable) { throw 'The bundled Python could not load the app. Extract the whole ZIP again into a new folder with a short path, such as C:\DataWorkbench.' }
+    throw 'The local environment needs repair. Remove its requirements.sha256 stamp and launch again.'
+}
 if ($Check) { exit 0 }
 $projectsPath = Join-Path $projectRoot 'projects'
 try {

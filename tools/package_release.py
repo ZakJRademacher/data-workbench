@@ -13,10 +13,8 @@ FOLDERS={'workbench','web','tests','tools','docs','licenses','evidence'}
 TEXT={'.py','.md','.txt','.json','.cmd','.ps1','.js','.mjs','.css','.html','.csv','.svg','.toml','.yml'}
 FILES={'.gitignore','LICENSE','README.md','requirements.txt','requirements.lock.txt','requirements-dev.txt','Start Workbench.cmd'}
 
-def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
-    output=args.output or ROOT/f'deliverables/Data-Workbench-{VERSION}.zip'
-    output.parent.mkdir(parents=True,exist_ok=True)
+def release_paths():
+    """The app files every download ships, sorted."""
     paths=[]
     for path in ROOT.rglob('*'):
         relative=path.relative_to(ROOT)
@@ -24,6 +22,13 @@ def main():
         if (len(relative.parts)==1 and path.name in FILES) or relative.parts[0] in FOLDERS:
             paths.append(path)
         elif relative.as_posix()=='deliverables/Northstar demo package.zip':paths.append(path)
+    return sorted(paths)
+
+def main():
+    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path);args=parser.parse_args()
+    output=args.output or ROOT/f'deliverables/Data-Workbench-{VERSION}.zip'
+    output.parent.mkdir(parents=True,exist_ok=True)
+    paths=release_paths()
     with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(paths):
             name=(Path('data-workbench')/path.relative_to(ROOT)).as_posix()

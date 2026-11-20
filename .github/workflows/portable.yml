@@ -1,0 +1,52 @@
+name: Windows download with bundled Python
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+permissions:
+  contents: read
+jobs:
+  portable:
+    # Build the no-install Windows download, then start it as a user would with
+    # every installed Python hidden from PATH and run the built-in demo.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          # Must match the bundled CPython minor version in tools/build_portable.py.
+          python-version: '3.14'
+      - name: Build
+        run: python -B tools/build_portable.py
+      - name: Start the extracted download without an installed Python
+        run: |
+          $zip = Get-ChildItem dist/*-windows-x64.zip | Select-Object -First 1
+          python tools/clean_install_check.py --archive $zip.FullName --portable --workdir "$env:RUNNER_TEMP\portable" --evidence "$env:RUNNER_TEMP\portable\evidence.json"
+          Copy-Item "$env:RUNNER_TEMP\portable\evidence.json" dist/portable-check.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-download
+          path: dist/
+          if-no-files-found: error
+  attach:
+    # On a published release, attach the download that passed the check above.
+    if: github.event_name == 'release'
+    needs: portable
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-download
+          path: dist
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          test -f "dist/Data-Workbench-$version-windows-x64.zip" || { echo "No download for $version: check workbench/common.py VERSION"; exit 1; }
+          gh release upload "$GITHUB_REF_NAME" dist/Data-Workbench-$version-windows-x64.zip dist/Data-Workbench-$version-windows-x64.json --repo "$GITHUB_REPOSITORY" --clobber
