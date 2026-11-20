@@ -157,7 +157,20 @@ $('#demo').onclick = guarded(async () => {
 });
 $('#storage-info').onclick = guarded(async () => {
   const s = await api('/session');
-  openModal('Where your work is saved', `<p>Project files, recipes, and completed packages:</p><p><code>${esc(s.project_root)}</code></p><p>Active processing databases and dependencies stay outside this folder. Processing runs locally. OneDrive synchronization follows your existing OneDrive settings.</p>`, null);
+  const where = s.installed ? 'This installed copy keeps them in your user app-data folder, so upgrading or uninstalling the program never touches them.' : 'They stay inside this download’s folder. To upgrade, copy this projects folder into the new version.';
+  openModal('Where your work is saved', `<p>Project files, recipes, and completed packages:</p><p><code>${esc(s.project_root)}</code></p><p>${where} Active processing databases and dependencies stay outside this folder. Processing runs locally. OneDrive synchronization follows your existing OneDrive settings.</p><h3>Bring in projects from another folder</h3><p>Copy projects from an earlier download, such as <code>C:\\DataWorkbench\\data-workbench\\projects</code>. Projects already here are left as they are; nothing is overwritten, and every copied file is checked against the original.</p><div class="form-grid"><label>Projects folder to copy from<input id="import-folder" placeholder="C:\\DataWorkbench\\data-workbench\\projects"></label>${s.desktop ? '<button type="button" id="choose-import-folder" class="secondary">Choose folder…</button>' : ''}</div>`, async () => {
+    const folder = $('#import-folder').value.trim();
+    if (!folder) throw new Error('Choose the projects folder to copy from.');
+    const result = await post('/projects/import', { folder });
+    await refreshProjects();
+    const copied = result.copied.length, skipped = result.skipped.length;
+    notify(`${copied} project${copied === 1 ? '' : 's'} copied${skipped ? ` · ${skipped} already here, left unchanged` : ''}.`);
+  }, 'Copy projects');
+  const choose = $('#choose-import-folder');
+  if (choose) choose.onclick = guarded(async () => {
+    const chosen = await post('/desktop/choose-folder', {});
+    if (chosen.folder) $('#import-folder').value = chosen.folder;
+  });
 });
 
 function switchTab(tab) {

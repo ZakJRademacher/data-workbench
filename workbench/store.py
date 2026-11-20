@@ -115,6 +115,55 @@ class ProjectStore:
                 handle.close()
                 setattr(self, name, None)
 
+    def import_projects(self, folder):
+        """Copy projects from another projects folder (an earlier download, say) into this one.
+
+        Only projects not already here are copied; nothing is overwritten. Each one is copied into a
+        staging folder, every file is checked against the original, and only then is it moved into
+        place, so an interrupted or failed copy never appears as a project.
+        """
+        if not isinstance(folder, str) or not folder.strip():
+            raise WorkbenchError("Choose the projects folder to copy from.")
+        source = Path(folder.strip().strip('"')).expanduser()
+        if not source.is_dir():
+            raise WorkbenchError("That folder does not exist.")
+        source = source.resolve()
+        if source == self.root:
+            raise WorkbenchError("That is this app's own projects folder.")
+        if (source / "projects").is_dir() and not any(source.glob("*/project.json")):
+            source = source / "projects"  # the download folder was chosen rather than its projects folder
+        found = sorted(p.parent for p in source.glob("*/project.json") if self._is_id(p.parent.name))
+        if not found:
+            raise WorkbenchError("No Data Workbench projects were found there. Choose the projects folder inside the earlier download.")
+        copied, skipped = [], []
+        with self.lock:
+            staging = self.root / ".importing"
+            remove_path(staging)
+            for original in found:
+                name = read_json(original / "project.json").get("name", original.name)
+                if (self.root / original.name).exists():
+                    skipped.append(name)
+                    continue
+                copy_to = staging / original.name
+                shutil.copytree(original, copy_to)
+                for path in original.rglob("*"):
+                    if path.is_file() and file_hash(copy_to / path.relative_to(original)) != file_hash(path):
+                        remove_path(staging)
+                        raise WorkbenchError(f"Copying {name} did not produce an identical copy; nothing from it was kept.")
+                for status in copy_to.glob("runs/*/status.json"):
+                    record = read_json(status)
+                    if record.get("state") in ("queued", "running"):
+                        record.update(state="interrupted", message="Copied from another projects folder before this run finished. Run again to rebuild.")
+                        write_json(status, record)
+                copy_to.rename(self.root / original.name)
+                copied.append(name)
+            remove_path(staging)
+        return {"copied": copied, "skipped": skipped, "from": str(source)}
+
+    @staticmethod
+    def _is_id(value):
+        return len(value) == 32 and all(c in "0123456789abcdef" for c in value)
+
     def path(self, project_id):
         if not isinstance(project_id, str) or len(project_id) != 32 or any(c not in "0123456789abcdef" for c in project_id):
             raise WorkbenchError("Unknown project identifier.")

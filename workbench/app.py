@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
 
-from .common import MAX_FILE_BYTES, ROOT, VERSION, WorkbenchError, dumps, file_hash
+from .common import MAX_FILE_BYTES, ROOT, VERSION, WorkbenchError, default_projects_root, dumps, file_hash, installed
 from .demo import create_demo
 from .store import ProjectStore, remove_path
 
@@ -33,7 +33,7 @@ def allowed_host(host, port):
 
 
 def create_app(project_root=None):
-    store = ProjectStore(project_root or os.environ.get("DATA_WORKBENCH_PROJECTS", ROOT / "projects"))
+    store = ProjectStore(project_root or default_projects_root())
     app = FastAPI(title="Data Workbench", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
     app.state.token = secrets.token_urlsafe(32)
@@ -86,7 +86,19 @@ def create_app(project_root=None):
 
     @app.get("/api/session")
     def session():
-        return response({"token": app.state.token, "version": VERSION, "project_root": str(store.root)})
+        return response({"token": app.state.token, "version": VERSION, "project_root": str(store.root),
+                         "installed": installed(), "desktop": hasattr(app.state, "desktop_key")})
+
+    @app.post("/api/projects/import")
+    async def import_projects(request: Request):
+        return response(store.import_projects((await request.json()).get("folder", "")))
+
+    @app.post("/api/desktop/choose-folder")
+    def choose_folder():
+        choose = getattr(app.state, "desktop_choose_folder", None)
+        if choose is None:
+            raise WorkbenchError("Type the folder path instead.")
+        return response({"folder": choose()})
 
     @app.get("/api/projects")
     def projects():
@@ -210,7 +222,7 @@ def create_app(project_root=None):
 def main():
     parser = argparse.ArgumentParser(description="Data Workbench · local data preparation")
     parser.add_argument("--port", type=int, default=8810)
-    parser.add_argument("--projects", type=Path, default=ROOT / "projects")
+    parser.add_argument("--projects", type=Path)
     parser.add_argument("--open-browser", action="store_true")
     args = parser.parse_args()
     app = create_app(args.projects)
