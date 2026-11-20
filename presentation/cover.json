@@ -1,9 +1,9 @@
 {
   "title": "Data Workbench",
   "eyebrow": "DATA PREPARATION",
-  "description": "From messy exports to reviewed, reproducible tables.",
+  "description": "From messy exports to reviewed, reproducible tables, and payments tied out to the books.",
   "format": "Python · SQL · CSV / Excel",
-  "image": "docs/images/review-2.2.2.png",
+  "image": "docs/images/review-3.0.0.png",
   "tokens": "web/design-tokens.json",
   "color_roles": {
     "canvas": "canvas",
@@ -14,7 +14,7 @@
     "accent": "accent"
   },
   "frame_label": "Review workspace",
-  "preview_note": "Local review workspace · fictional demo · v2.2.2",
+  "preview_note": "Local review workspace · fictional demo · v3.0.0",
   "footer": "PYTHON / SQL / EXACT DECIMALS",
   "preview_mode": "crop-top"
 }

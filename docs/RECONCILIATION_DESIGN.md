@@ -200,7 +200,7 @@ The engine's existing pieces are reused unchanged: ingest and header detection, 
 
 ## Phase 1 status
 
-Built in `workbench/recon/`: Stripe payouts against QuickBooks deposits, and payout arithmetic.
+Built in `workbench/recon/`: Stripe payouts against QuickBooks deposits, and payout arithmetic. From 3.0 the app's **Reconcile payments** screen runs the same code (`workbench/reconciliations.py`) and writes identical files; the command line remains available:
 
 ```
 python -m workbench.recon --payouts stripe_payouts.csv --itemized stripe_itemized.csv \

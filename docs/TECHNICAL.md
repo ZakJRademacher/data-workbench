@@ -20,11 +20,15 @@ Missing values and failed conversions are visible in field profiles. IQR outlier
 
 The runtime directory is `%LOCALAPPDATA%/DataWorkbench/runtime/<workspace-hash>/`. `DATA_WORKBENCH_RUNTIME` overrides it for tests. Active DuckDB files and spill files stay there. Completed snapshots are copied after closing their connections. Restart changes queued/running status to interrupted; partial outputs remain unpublished, and a new run rebuilds from retained inputs. Intermediate files are retained for diagnosis rather than automatically deleting user work.
 
+Reconciliations live in `reconciliations/<id>/` beside the projects: `inputs/<role>/<original name>` (unchanged), `request.json` (settings and each input's SHA-256), `status.json`, and `outputs/`, published by renaming a complete staging folder. They run the same code as `python -m workbench.recon`, on the same single executor as project runs.
+
 One executor serializes jobs. Processing snapshots isolate a running job from later setting changes. A semantic run fingerprint includes engine version and source-code build hash, source bytes/settings/names, recipe, and correction/exclusion values. Decisions include source-version-specific record IDs. Stable pagination orders by source and row.
 
 ## API
 
-The server binds to `127.0.0.1`. Mutating requests require `X-Workbench-Token` from `GET /api/session`; cross-origin mutations and non-local Host headers are rejected. The token changes on restart. There is no public authentication or deployment surface.
+The server binds to `127.0.0.1`: port 8810 in browser mode, or a free port chosen at start in the desktop window (`workbench/desktop.py`, pywebview over WebView2, run by `pythonw.exe`). The Host header must name that exact address and port, which defeats DNS rebinding. Requests a browser labels as coming from another site or another local port (`Sec-Fetch-Site` other than `same-origin` or `none`) are refused, reads included. Mutating requests also require `X-Workbench-Token` from `GET /api/session`, and cross-origin mutations are rejected. The token changes on restart. There is no public authentication or deployment surface.
+
+Only the first app session on a projects folder holds `.workbench.lock` in it, and only that session relabels runs left queued or running as interrupted, so a second session can never relabel work the first is still processing. A desktop session also records its port and a one-time key in `.desktop-instance.json`, which a second launch uses to bring the open window forward (`POST /api/desktop/focus`).
 
 | Interface | Behavior |
 | --- | --- |
@@ -42,6 +46,12 @@ The server binds to `127.0.0.1`. Mutating requests require `X-Workbench-Token` f
 | `GET .../runs/{run_id}/files/{filename}` | Download a published, hash-checked output. |
 | `GET .../runs/{run_id}/package` | Download the complete published output ZIP. |
 | `POST /api/demo` | Create the original fictional demonstration project. |
+| `POST /api/projects/import` | `{folder}`: copy projects not already present from another projects folder, verified file by file. |
+| `GET /api/reconciliations` | Saved reconciliations, and saved month closes that can be carried forward. |
+| `POST /api/reconciliations/uploads` | Multipart `file`: stage one export (CSV or XLSX) for a reconciliation. |
+| `POST /api/reconciliations` | Start a payouts (`period`, optional `close_account`, `prior_close`) or orders (`platform`) reconciliation from staged uploads. |
+| `GET /api/reconciliations/{id}` | Request, state, and when complete the result, outputs and currency. |
+| `GET /api/reconciliations/{id}/files/{name}` | Download one output: `summary.md`, `matches.csv`, `refunds.csv`, `exceptions.csv`, `result.json`, `close-state.json`. |
 
 Decimal and date values are serialized as strings rather than lossy JSON numbers. Validation errors return a readable error with HTTP 400. The advanced recipe editor exposes the same versioned JSON used by the visual controls; source identifiers must be remapped when moving a recipe to an unrelated project.
 
