@@ -22,6 +22,16 @@ from .demo import create_demo
 from .store import ProjectStore, remove_path
 
 
+def allowed_host(host, port):
+    """The Host header must name this loopback server exactly, which defeats DNS rebinding."""
+    if host == "testserver":  # the in-process test client
+        return True
+    name, separator, given = host.rpartition(":")
+    if not separator:
+        name, given = host, "80"
+    return name in ("127.0.0.1", "localhost") and (port is None or given == str(port))
+
+
 def create_app(project_root=None):
     store = ProjectStore(project_root or os.environ.get("DATA_WORKBENCH_PROJECTS", ROOT / "projects"))
     app = FastAPI(title="Data Workbench", docs_url=None, redoc_url=None, openapi_url=None)
@@ -42,8 +52,13 @@ def create_app(project_root=None):
     @app.middleware("http")
     async def protect(request, call_next):
         host = request.headers.get("host", "")
-        if host.split(":")[0] not in ("127.0.0.1", "localhost", "testserver"):
+        if not allowed_host(host, (request.scope.get("server") or (None, None))[1]):
             return response({"error": "Localhost requests only."}, 403)
+        # Browsers label each request with where it came from. Only this app's own pages (or the
+        # address typed or opened directly) may use it; a page on another site or another local
+        # port cannot read, embed or trigger anything here.
+        if request.headers.get("sec-fetch-site", "same-origin") not in ("same-origin", "none"):
+            return response({"error": "Requests from other sites are not accepted."}, 403)
         if request.url.path == "/api/desktop/focus":
             # A second desktop launch asks this one to show its window (see workbench.desktop).
             key = getattr(app.state, "desktop_key", None)

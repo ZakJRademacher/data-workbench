@@ -26,5 +26,4 @@ def draw():
 if __name__ == "__main__":
     out = ROOT / "packaging" / "workbench.ico"
     draw().save(out, sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    draw().resize((256, 256), Image.LANCZOS).save(ROOT / "packaging" / "workbench-256.png")
     print(out)
