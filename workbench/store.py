@@ -17,6 +17,18 @@ from .ingest import inspect
 from .recipe import starter_recipe, validate, migrate
 
 
+def remove_path(path):
+    """Delete a working file or folder, leaving it for the next start if Windows still holds it open."""
+    path = Path(path)
+    try:
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 class ProjectStore:
     def __init__(self, root):
         self.root = Path(root).resolve()
@@ -27,6 +39,10 @@ class ProjectStore:
         self.runtime = runtime_root() / digest(str(self.root))[:16]
         self.engine_build = digest({p.name: file_hash(p) for p in Path(__file__).parent.glob('*.py')})
         self.runtime.mkdir(parents=True, exist_ok=True)
+        # Working files from an earlier session (an interrupted run's database, an export zip whose
+        # download never finished) are never reused: published packages live under the project.
+        for leftover in self.runtime.iterdir():
+            remove_path(leftover)
         for project in self.root.glob("*/project.json"):
             for status in project.parent.glob("runs/*/status.json"):
                 record = read_json(status)
@@ -205,6 +221,8 @@ class ProjectStore:
         except Exception as exc:
             write_json(run / "status.json", {"id": rid, "state": "failed", "message": str(exc), "progress": 0, "fingerprint": fingerprint})
         finally:
+            # The package already holds its own copy of the database; drop the working copy and spill.
+            remove_path(runtime)
             self.busy = False
 
     def preview(self, pid, rid, table, disposition="accepted", offset=0, limit=100):
