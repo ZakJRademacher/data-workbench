@@ -99,8 +99,10 @@ class ProjectStore:
             self._root_lock.close()
             self._root_lock = None
             return
-        for project in self.root.glob("*/project.json"):
-            for status in project.parent.glob("runs/*/status.json"):
+        unfinished = [s for p in self.root.glob("*/project.json") for s in p.parent.glob("runs/*/status.json")]
+        unfinished += list(self.root.glob("reconciliations/*/status.json"))
+        for status in unfinished:
+            if True:
                 record = read_json(status)
                 if record["state"] in ("queued", "running"):
                     record.update(state="interrupted", message="The previous app session ended. Run again to rebuild; no completed package was published.")

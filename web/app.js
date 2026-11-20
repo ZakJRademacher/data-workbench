@@ -118,6 +118,8 @@ async function loadProject(id) {
   state.offset = 0;
   $('#welcome').hidden = true;
   $('#workspace').hidden = false;
+  $('#recon').hidden = true;
+  $('#open-recon').classList.remove('active');
   $('#project-name').textContent = state.project.name;
   $('#breadcrumb').textContent = state.project.name;
   $('#project-subtitle').textContent = `${state.project.sources.length} source files · Saved recipes · Original files preserved`;

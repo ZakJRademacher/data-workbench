@@ -19,6 +19,7 @@ from starlette.background import BackgroundTask
 
 from .common import MAX_FILE_BYTES, ROOT, VERSION, WorkbenchError, default_projects_root, dumps, file_hash, installed
 from .demo import create_demo
+from .reconciliations import KINDS, PLATFORMS, Reconciliations
 from .store import ProjectStore, remove_path
 
 
@@ -36,6 +37,7 @@ def create_app(project_root=None):
     store = ProjectStore(project_root or default_projects_root())
     app = FastAPI(title="Data Workbench", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
+    recon = Reconciliations(store)
     app.state.token = secrets.token_urlsafe(32)
 
     def response(value, status=200):
@@ -116,9 +118,12 @@ def create_app(project_root=None):
     def project(pid: str):
         return response(store.get(pid))
 
-    @app.post("/api/projects/{pid}/sources")
-    async def sources(pid: str, request: Request):
-        # Bound the complete request before multipart parsing can spill uploads to disk.
+    async def receive_upload(request):
+        """One uploaded file, bounded before multipart parsing can spill it to disk.
+
+        Returns the form and the upload written to a temporary file; the caller removes the file
+        and closes the form.
+        """
         declared = request.headers.get("content-length")
         if declared and int(declared) > MAX_FILE_BYTES * 2:
             raise WorkbenchError("Upload one file at a time, up to 50 MB.")
@@ -135,19 +140,48 @@ def create_app(project_root=None):
                     yield chunk
             from starlette.formparsers import MultiPartParser
             form = await MultiPartParser(request.headers, replay(), max_files=1, max_fields=1).parse()
-            upload = form.get("file")
-            if not upload or not hasattr(upload, "file"):
-                raise WorkbenchError("Choose a CSV or XLSX file.")
-            try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=Path(upload.filename or "").suffix) as temporary:
-                    temp_path = Path(temporary.name)
-                    while block := upload.file.read(1024 * 1024):
-                        temporary.write(block)
-                return response(store.add_source(pid, upload.filename, temp_path, form.get("replace_id")), 201)
-            finally:
-                await form.close()
-                if "temp_path" in locals():
-                    temp_path.unlink(missing_ok=True)
+        upload = form.get("file")
+        if not upload or not hasattr(upload, "file"):
+            await form.close()
+            raise WorkbenchError("Choose a CSV or XLSX file.")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(upload.filename or "").suffix) as temporary:
+            while block := upload.file.read(1024 * 1024):
+                temporary.write(block)
+        return form, upload.filename, Path(temporary.name)
+
+    @app.post("/api/projects/{pid}/sources")
+    async def sources(pid: str, request: Request):
+        form, filename, temp_path = await receive_upload(request)
+        try:
+            return response(store.add_source(pid, filename, temp_path, form.get("replace_id")), 201)
+        finally:
+            await form.close()
+            temp_path.unlink(missing_ok=True)
+
+    @app.get("/api/reconciliations")
+    def reconciliations_list():
+        return response({"items": recon.list(), "closes": recon.closes(), "kinds": KINDS, "platforms": PLATFORMS})
+
+    @app.post("/api/reconciliations/uploads")
+    async def reconciliation_upload(request: Request):
+        form, filename, temp_path = await receive_upload(request)
+        try:
+            return response(recon.stage_upload(filename, temp_path), 201)
+        finally:
+            await form.close()
+            temp_path.unlink(missing_ok=True)
+
+    @app.post("/api/reconciliations")
+    async def reconciliation_start(request: Request):
+        return response(recon.start(await request.json()), 201)
+
+    @app.get("/api/reconciliations/{rid}")
+    def reconciliation(rid: str):
+        return response(recon.get(rid))
+
+    @app.get("/api/reconciliations/{rid}/files/{name}")
+    def reconciliation_file(rid: str, name: str):
+        return FileResponse(recon.file(rid, name), filename=name)
 
     @app.put("/api/projects/{pid}/sources/{sid}")
     async def configure(pid: str, sid: str, request: Request):
