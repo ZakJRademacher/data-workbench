@@ -15,10 +15,11 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 
 from .common import MAX_FILE_BYTES, ROOT, VERSION, WorkbenchError, dumps, file_hash
 from .demo import create_demo
-from .store import ProjectStore
+from .store import ProjectStore, remove_path
 
 
 def create_app(project_root=None):
@@ -175,7 +176,8 @@ def create_app(project_root=None):
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipped:
             for filename in [*manifest["output_hashes"], "manifest.json"]:
                 zipped.write(root / filename, filename)
-        return FileResponse(archive, filename="Data-Workbench-" + rid + ".zip")
+        # The zip is built per request; remove it once it has been sent.
+        return FileResponse(archive, filename="Data-Workbench-" + rid + ".zip", background=BackgroundTask(remove_path, archive))
 
     app.mount("/static", StaticFiles(directory=ROOT / "web"), name="static")
     return app
