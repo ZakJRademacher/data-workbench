@@ -1,5 +1,5 @@
 // Payment reconciliation screens. Uses the helpers app.js defines ($, $$, api, post, esc, notify, guarded).
-const recon = { kind: 'payouts', files: {}, closes: [], poll: null, current: null };
+const recon = { kind: 'payouts', files: {}, closes: [], poll: null, current: null, uploading: 0 };
 
 const RECON_FILES = {
   payouts: [
@@ -78,7 +78,13 @@ function renderSlots() {
     const form = new FormData();
     form.append('file', chosen);
     notify('Adding ' + chosen.name + '…');
-    recon.files[input.dataset.role] = await api('/reconciliations/uploads', { method: 'POST', body: form });
+    delete recon.files[input.dataset.role];  // never reconcile with the file being replaced
+    recon.uploading++;
+    try {
+      recon.files[input.dataset.role] = await api('/reconciliations/uploads', { method: 'POST', body: form });
+    } finally {
+      recon.uploading--;
+    }
     notify('Added ' + chosen.name + '.');
     renderSlots();
   }));
@@ -89,8 +95,10 @@ function renderCloses() {
   if (!select) return;
   const account = $('#recon-account').value.trim();
   const usable = recon.closes.filter(c => c.account === account);
+  const chosen = select.value;
   select.innerHTML = `<option value="">None · first month for this account</option>` +
     usable.map(c => `<option value="${esc(c.id)}">${esc(c.period)} close · ${esc(c.account)} · ${esc(c.currency || '')}</option>`).join('');
+  if (usable.some(c => c.id === chosen)) select.value = chosen;
   select.disabled = !usable.length;
 }
 
@@ -101,6 +109,7 @@ $$('[data-kind]').forEach(b => b.onclick = () => {
 });
 
 $('#recon-start').onclick = guarded(async () => {
+  if (recon.uploading) throw new Error('Wait for the files to finish adding.');
   const files = Object.fromEntries(Object.entries(recon.files).map(([role, f]) => [role, f.id]));
   const body = recon.kind === 'payouts'
     ? { kind: 'payouts', period: $('#recon-period').value, close_account: $('#recon-account').value, prior_close: $('#recon-prior').value,

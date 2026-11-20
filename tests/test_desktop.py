@@ -78,3 +78,29 @@ def test_check_mode_starts_answers_and_cleans_up(tmp_path, monkeypatch, capsys):
     reopened = ProjectStore(root)
     assert reopened.primary, "the check run released the projects folder"
     reopened.close()
+
+
+def test_a_second_session_cannot_start_jobs_on_the_same_projects(store):
+    pid = create_demo(store)["id"]
+    second = ProjectStore(store.root)
+    try:
+        import pytest
+        from workbench.common import WorkbenchError
+        from workbench.reconciliations import Reconciliations
+        with pytest.raises(WorkbenchError, match="Another Data Workbench window"):
+            second.start_run(pid, synchronous=True)
+        with pytest.raises(WorkbenchError, match="Another Data Workbench window"):
+            Reconciliations(second).start({"kind": "orders"})
+    finally:
+        second.close()
+
+
+def test_focus_waits_until_the_window_exists(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATA_WORKBENCH_RUNTIME", str(tmp_path / "runtime"))
+    app = create_app(tmp_path / "projects")
+    try:
+        client = TestClient(app)
+        app.state.desktop_key = "secret-key"
+        assert client.post("/api/desktop/focus", headers={"X-Workbench-Desktop": "secret-key"}).status_code == 409
+    finally:
+        app.state.store.close()

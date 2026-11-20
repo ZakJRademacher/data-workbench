@@ -73,8 +73,19 @@ Name: "{autodesktop}\Data Workbench"; Filename: "{app}\runtime\python\pythonw.ex
 Filename: "{app}\runtime\python\pythonw.exe"; Parameters: "-B -m workbench.desktop"; WorkingDir: "{app}"; Description: "Open Data Workbench"; Flags: postinstall nowait skipifsilent
 
 [UninstallDelete]
-; Program files only. Projects, logs and working files in %LOCALAPPDATA%\DataWorkbench stay.
-Type: filesandordirs; Name: "{app}"
+; Program files only: the folders setup created, then the program folder if it is now empty.
+; Anything else in it, and projects, logs and working files in %LOCALAPPDATA%\DataWorkbench, stay.
+Type: filesandordirs; Name: "{app}\runtime"
+Type: filesandordirs; Name: "{app}\workbench"
+Type: filesandordirs; Name: "{app}\web"
+Type: filesandordirs; Name: "{app}\tools"
+Type: filesandordirs; Name: "{app}\docs"
+Type: filesandordirs; Name: "{app}\licenses"
+Type: filesandordirs; Name: "{app}\packaging"
+Type: filesandordirs; Name: "{app}\tests"
+Type: filesandordirs; Name: "{app}\evidence"
+Type: filesandordirs; Name: "{app}\deliverables"
+Type: dirifempty; Name: "{app}"
 
 [Messages]
 FinishedLabel=Data Workbench is installed. Your projects are kept in your user app-data folder, so upgrading or uninstalling the program never removes them.

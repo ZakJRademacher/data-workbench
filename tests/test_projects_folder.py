@@ -105,3 +105,16 @@ def test_the_api_copies_projects_and_reports_the_storage_mode(tmp_path, monkeypa
         assert client.post("/api/desktop/choose-folder", json={}, headers=headers).status_code == 400, "no folder picker outside the window"
     finally:
         app.state.store.close()
+
+
+def test_a_project_containing_links_is_not_copied(store, earlier, tmp_path):
+    folder, project, _ = earlier
+    outside = tmp_path / "elsewhere.txt"
+    outside.write_text("not part of the project")
+    try:
+        (folder / project["id"] / "link.txt").symlink_to(outside)
+    except OSError:
+        pytest.skip("creating symbolic links needs Developer Mode or admin rights on Windows")
+    with pytest.raises(WorkbenchError, match="links"):
+        store.import_projects(str(folder))
+    assert store.list() == []
