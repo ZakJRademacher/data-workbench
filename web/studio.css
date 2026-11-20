@@ -373,3 +373,38 @@ footer { border-color: #30415966; color: #7085A5; }
   .metric { transition: none; }
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*) { animation: none; }
 }
+
+/* Payment reconciliation screens (web/recon.js) */
+#recon-nav button { background: transparent; display: block; width: 100%; text-align: left; white-space: normal; color: var(--muted); padding: 14px 12px; border-radius: 4px; font-size: 12px; }
+#recon-nav button:hover { color: var(--ink); background: var(--surface); }
+#recon-nav button.active { color: var(--ink); background: var(--raised); box-shadow: inset 3px 0 var(--accent); }
+.recon-slots { display: grid; gap: 10px; margin-top: 18px; }
+.recon-slot { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.recon-slot div { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.recon-slot > span { flex-shrink: 0; white-space: nowrap; }
+.recon-slot p { margin: 4px 0 0; color: var(--success); }
+.recon-item { width: 100%; text-align: left; cursor: pointer; }
+.recon-item div { display: grid; gap: 4px; }
+.recon-item p { margin: 2px 0 0; }
+.recon-item.active { outline: 1px solid #72A1E9; }
+.recon-tieout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; align-items: start; margin: 18px 0; }
+.recon-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.recon-checks .ok { color: var(--success); }
+.recon-checks .bad { color: var(--error); }
+label.check { display: flex; gap: 10px; align-items: center; }
+#recon-result:not(:empty) { margin: 24px 0 32px; }
+#recon-history { margin-bottom: 40px; }
+#recon .tab-panel { margin-bottom: 32px; }
+@media (max-width: 760px) { .recon-tieout { grid-template-columns: 1fr; } }
+#recon .metric strong small { font-size: 13px; color: var(--muted); font-weight: 500; }
+#recon .metric strong { font-size: clamp(22px, 2.4vw, 34px); overflow-wrap: anywhere; }
+.recon-tieout .num { text-align: right; white-space: nowrap; }
+.recon-exceptions { display: grid; gap: 12px; margin: 12px 0 20px; }
+.recon-exception { display: grid; gap: 8px; align-items: start; }
+.recon-exception header { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.recon-exception p { margin: 0; }
+.recon-action { color: var(--muted); }
+.recon-refs { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.recon-refs b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+.recon-tieout th:first-child, .recon-tieout td:first-child { text-align: left; }
+#recon-history { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
