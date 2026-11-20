@@ -81,7 +81,7 @@ Version 2 reads version-1 recipes with their previous defaults, then saves new e
 
 ## Storage and reproducibility
 
-Source, documents, evidence, and completed runs live together in the extracted app folder. Actual user projects are under `projects/` and excluded from Git and release downloads. Active databases and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`; completed packages contain closed database copies. Old source versions and run snapshots remain available on disk.
+Source, documents, evidence, and completed runs live together in the extracted app folder. Actual user projects are under `projects/` and excluded from Git and release downloads. While a run is processing, its working database and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`. They are removed when the run finishes or fails, or on the next start after an interruption; completed packages keep their own closed database copies. Export zips are built there per download and deleted once sent. Old source versions and run snapshots remain available on disk.
 
 Files are processed on your computer. If you store projects in OneDrive, synchronization is handled separately by OneDrive.
 

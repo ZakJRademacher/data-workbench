@@ -34,5 +34,6 @@ def test_local_session_upload_run_preview_and_package(tmp_path, monkeypatch):
         assert amount=='12.345600000000'
         package = client.get(prefix+'/runs/'+run['id']+'/package')
         assert package.status_code==200 and package.content[:2]==b'PK'
+        assert list(app.state.store.runtime.iterdir())==[]  # neither the run's working copy nor the zip is kept
         assert client.get(prefix+'/runs/'+run['id']+'/files/not-found.csv').status_code==400
     app.state.store.worker.shutdown()
