@@ -6,3 +6,6 @@ projects/
 node_modules/
 .realdata-cache/
 realdata-report.json
+dist/
+.portable-cache/
+runtime/
