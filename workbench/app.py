@@ -67,8 +67,9 @@ def create_app(project_root=None):
             focus = getattr(app.state, "desktop_focus", None)
             if request.method != "POST" or not key or not secrets.compare_digest(request.headers.get("x-workbench-desktop", ""), key):
                 return response({"error": "Not available."}, 403)
-            if focus:
-                focus()
+            if not focus:
+                return response({"error": "The window is still opening."}, 409)
+            focus()
             return Response(status_code=204)
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             if request.headers.get("x-workbench-token") != app.state.token:
@@ -226,9 +227,16 @@ def create_app(project_root=None):
         root = store.run_dir(pid, rid) / "outputs"
         return root, status["manifest"]
 
+    def contained(root, names):
+        # A manifest copied in from elsewhere must not name files outside its own outputs folder.
+        for name in names:
+            if not isinstance(name, str) or Path(name).name != name or name in ("", ".", "..") or (root / name).is_symlink():
+                raise WorkbenchError("This run's manifest names a file outside its outputs. Rerun to rebuild the package.")
+
     @app.get("/api/projects/{pid}/runs/{rid}/files/{filename}")
     def download(pid: str, rid: str, filename: str):
         root, manifest = output_dir(pid, rid)
+        contained(root, [*manifest["output_hashes"], filename])
         if filename not in set(manifest["output_hashes"]) | {"manifest.json"}:
             raise WorkbenchError("Output file not found.")
         path = root / filename
@@ -239,6 +247,7 @@ def create_app(project_root=None):
     @app.get("/api/projects/{pid}/runs/{rid}/package")
     def package(pid: str, rid: str):
         root, manifest = output_dir(pid, rid)
+        contained(root, manifest["output_hashes"])
         archive = store.runtime / (rid + "-" + secrets.token_hex(4) + ".zip")
         for filename, sha in manifest["output_hashes"].items():
             if not (root / filename).is_file() or file_hash(root / filename) != sha:
@@ -259,6 +268,8 @@ def main():
     parser.add_argument("--projects", type=Path)
     parser.add_argument("--open-browser", action="store_true")
     args = parser.parse_args()
+    from .desktop import hold_app_mutex
+    hold_app_mutex()  # setup and uninstall ask to close this session too
     app = create_app(args.projects)
     if args.open_browser:
         def open_when_ready():

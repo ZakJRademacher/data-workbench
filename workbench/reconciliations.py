@@ -89,6 +89,7 @@ class Reconciliations:
         return found
 
     def start(self, payload, synchronous=False):
+        self.store.require_primary()
         kind = payload.get("kind")
         if kind not in KINDS:
             raise WorkbenchError("Choose what to reconcile.")
@@ -144,8 +145,8 @@ class Reconciliations:
                 shutil.move(str(upload), target)
                 remove_path(upload.parent)
                 request["inputs"][role] = {"name": upload.name, "stored": f"{role}/{upload.name}", "sha256": file_hash(target)}
-            write_json(folder / "request.json", request)
             write_json(folder / "status.json", {"id": rid, "state": "queued", "message": "Waiting to start"})
+            write_json(folder / "request.json", request)  # written last: listing looks for this file
             self.store.busy = True
             if synchronous:
                 self._execute(rid)
@@ -207,7 +208,10 @@ class Reconciliations:
 
     def _summary(self, folder):
         request = read_json(folder / "request.json")
-        status = read_json(folder / "status.json")
+        try:
+            status = read_json(folder / "status.json")
+        except (OSError, ValueError):
+            status = {"state": "failed", "message": "This reconciliation's status could not be read. Run it again."}
         summary = {"id": folder.name, "kind": request["kind"], "title": KINDS[request["kind"]], "created": request["created"],
                    "state": status["state"], "message": status.get("message", ""),
                    "period": request.get("period"), "account": request.get("close_account"),

@@ -5,6 +5,7 @@ import json
 import os
 import re
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -69,7 +70,14 @@ def write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(dumps(value), encoding="utf-8")
-    os.replace(temporary, path)
+    for attempt in range(40):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError:  # Windows: another thread has the old file open for a moment
+            if attempt == 39:
+                raise
+            time.sleep(0.05)
 
 
 def read_json(path):

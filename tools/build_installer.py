@@ -60,6 +60,11 @@ def main():
         app = stage / "data-workbench"
         if not (app / "runtime" / "python" / "pythonw.exe").is_file():
             raise SystemExit("Use the bundled download (with runtime/python), not the source-only ZIP.")
+        if not (app / "workbench" / "desktop.py").is_file():
+            raise SystemExit("This download predates the desktop window (3.0), which the setup's shortcuts open.")
+        built = json.loads((app / "runtime" / "portable.json").read_text(encoding="utf-8")).get("app_version")
+        if built != VERSION:
+            raise SystemExit(f"The download is version {built}; this checkout is {VERSION}.")
         subprocess.run([iscc(), "/Q", f"/DAppVersion={VERSION}", f"/DStage={app}", f"/DOutputDir={output}",
                         str(ROOT / "packaging" / "workbench.iss")], check=True)
     finally:

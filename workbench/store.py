@@ -146,6 +146,9 @@ class ProjectStore:
                 if (self.root / original.name).exists():
                     skipped.append(name)
                     continue
+                if any(p.is_symlink() for p in [original, *original.rglob("*")]):
+                    remove_path(staging)
+                    raise WorkbenchError(f"{name} contains links to other locations, so it was not copied.")
                 copy_to = staging / original.name
                 shutil.copytree(original, copy_to)
                 for path in original.rglob("*"):
@@ -287,7 +290,12 @@ class ProjectStore:
         status["stale"] = status.get("fingerprint") != self.fingerprint(self.get(pid))
         return status
 
+    def require_primary(self):
+        if not self.primary:
+            raise WorkbenchError("Another Data Workbench window is using these projects. Run jobs from that window.")
+
     def start_run(self, pid, synchronous=False):
+        self.require_primary()
         with self.lock:
             if self.busy:
                 raise WorkbenchError("Another job is processing. Wait for it to finish before starting a new run.")

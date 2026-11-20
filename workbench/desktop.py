@@ -22,6 +22,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -40,7 +41,10 @@ def setup_logging():
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / "desktop.log"
     if path.exists() and path.stat().st_size > 2_000_000:
-        path.replace(folder / "desktop.previous.log")
+        try:
+            path.replace(folder / "desktop.previous.log")
+        except OSError:
+            pass  # another window has it open; rotate next time
     stream = open(path, "a", encoding="utf-8", buffering=1)
     # pythonw.exe has no stdout or stderr; anything printed would otherwise raise or vanish.
     if sys.stdout is None or sys.stderr is None or "pythonw" in Path(sys.executable).name.lower():
@@ -75,10 +79,19 @@ def bring_forward(root):
         record = json.loads((Path(root) / INSTANCE).read_text(encoding="utf-8"))
         request = urllib.request.Request(f"http://127.0.0.1:{int(record['port'])}/api/desktop/focus", method="POST",
                                          headers={"X-Workbench-Desktop": record["key"]})
-        with urllib.request.urlopen(request, timeout=3) as reply:
-            return reply.status == 204
     except (OSError, ValueError, KeyError, TypeError):
         return False
+    for _ in range(40):
+        try:
+            with urllib.request.urlopen(request, timeout=3) as reply:
+                return reply.status == 204
+        except urllib.error.HTTPError as refused:
+            if refused.code != 409:
+                return False
+        except OSError:
+            return False
+        time.sleep(0.25)
+    return False
 
 
 class Server:
@@ -131,9 +144,7 @@ def main(argv=None):
         return 0
     if os.name == "nt":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
-        # Held while the app runs; the installer and uninstaller (AppMutex) ask to close it first.
-        global _running
-        _running = ctypes.windll.kernel32.CreateMutexW(None, False, APP_ID)
+        hold_app_mutex()  # the installer and uninstaller ask to close the app first
 
     from .app import create_app
     app = create_app(root)
@@ -183,8 +194,19 @@ def main(argv=None):
     return 0
 
 
+def hold_app_mutex():
+    """Hold the named mutex setup and uninstall check (AppMutex) for as long as this process runs."""
+    global _running
+    if os.name == "nt" and _running is None:
+        _running = ctypes.windll.kernel32.CreateMutexW(None, False, APP_ID)
+
+
 def run_window(app, url):
     import webview
+    from webview.platforms import winforms
+
+    if winforms.renderer != "edgechromium":
+        raise RuntimeError(f"Microsoft Edge WebView2 is not available (pywebview chose {winforms.renderer}).")
 
     webview.settings["ALLOW_DOWNLOADS"] = True
     webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True

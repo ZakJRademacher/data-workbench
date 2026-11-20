@@ -54,3 +54,28 @@ def test_the_real_server_rejects_a_rebound_host_name(tmp_path, monkeypatch):
     finally:
         server.stop()
         app.state.store.close()
+
+
+def test_a_manifest_naming_files_outside_its_run_is_refused(tmp_path, monkeypatch):
+    from workbench.common import read_json, write_json
+    from workbench.demo import create_demo
+    monkeypatch.setenv("DATA_WORKBENCH_RUNTIME", str(tmp_path / "runtime"))
+    app = create_app(tmp_path / "projects")
+    store = app.state.store
+    try:
+        pid = create_demo(store)["id"]
+        run = store.start_run(pid, synchronous=True)
+        outputs = store.run_dir(pid, run["id"]) / "outputs"
+        secret = tmp_path / "projects" / "secret.txt"
+        secret.write_text("private", encoding="utf-8")
+        from workbench.common import file_hash
+        manifest = read_json(outputs / "manifest.json")
+        manifest["output_hashes"]["../../../secret.txt"] = file_hash(secret)
+        write_json(outputs / "manifest.json", manifest)
+        client = TestClient(app)
+        base = f"/api/projects/{pid}/runs/{run['id']}"
+        assert client.get(base + "/files/..%2F..%2F..%2Fsecret.txt").status_code in (400, 404)
+        assert client.get(base + "/package").status_code == 400
+        assert client.get(base + "/files/orders.csv").status_code == 400, "the whole manifest is refused"
+    finally:
+        store.close()
