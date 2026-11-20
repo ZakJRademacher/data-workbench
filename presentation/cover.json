@@ -3,7 +3,7 @@
   "eyebrow": "DATA PREPARATION",
   "description": "From messy exports to reviewed, reproducible tables.",
   "format": "Python · SQL · CSV / Excel",
-  "image": "docs/images/review-2.0.1.png",
+  "image": "docs/images/review-2.2.2.png",
   "tokens": "web/design-tokens.json",
   "color_roles": {
     "canvas": "canvas",
@@ -14,7 +14,7 @@
     "accent": "accent"
   },
   "frame_label": "Review workspace",
-  "preview_note": "Local review workspace · fictional demo",
+  "preview_note": "Local review workspace · fictional demo · v2.2.2",
   "footer": "PYTHON / SQL / EXACT DECIMALS",
   "preview_mode": "crop-top"
 }

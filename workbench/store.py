@@ -17,6 +17,59 @@ from .ingest import inspect
 from .recipe import starter_recipe, validate, migrate
 
 
+def remove_path(path):
+    """Delete a working file or folder, leaving it for the next start if Windows still holds it open."""
+    path = Path(path)
+    try:
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def try_lock(handle):
+    """Take an exclusive, non-blocking lock on an open file; False if another session holds it."""
+    try:
+        if os.name == "nt":
+            import msvcrt
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def sweep_runtime(base, keep):
+    """Remove working files left by app sessions that have ended.
+
+    Each session works in base/<session>/ and holds base/<session>.lock open and locked while it
+    runs, so a folder is only removed once its lock can be taken. Anything else in base (folders
+    and export zips from versions before 2.2.2, or a session folder whose lock is gone) is left over.
+    """
+    for entry in list(base.iterdir()):
+        stem = entry.name[:-len(".lock")] if entry.name.endswith(".lock") else entry.name
+        if stem == keep:
+            continue
+        lock = base / (stem + ".lock")
+        if not lock.exists():
+            remove_path(entry)
+        elif entry == lock:
+            try:
+                handle = open(lock, "a+b")
+            except OSError:
+                continue
+            with handle:
+                if not try_lock(handle):
+                    continue  # another app session on this project folder is still running
+                remove_path(base / stem)
+            remove_path(lock)
+
+
 class ProjectStore:
     def __init__(self, root):
         self.root = Path(root).resolve()
@@ -24,9 +77,19 @@ class ProjectStore:
         self.lock = threading.RLock()
         self.worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="workbench")
         self.busy = False
-        self.runtime = runtime_root() / digest(str(self.root))[:16]
         self.engine_build = digest({p.name: file_hash(p) for p in Path(__file__).parent.glob('*.py')})
-        self.runtime.mkdir(parents=True, exist_ok=True)
+        # Working files (a run's database and spill, export zips) live in a folder of this session's
+        # own. Published packages live under the project, so nothing here is ever reused; folders of
+        # sessions that have ended are removed, and those of a session still running are left alone.
+        base = runtime_root() / digest(str(self.root))[:16]
+        base.mkdir(parents=True, exist_ok=True)
+        session = "session-" + uuid.uuid4().hex[:12]
+        self._session_lock = open(base / (session + ".lock"), "a+b")
+        if not try_lock(self._session_lock):
+            raise WorkbenchError("Could not reserve a working folder for this session.")
+        sweep_runtime(base, keep=session)
+        self.runtime = base / session
+        self.runtime.mkdir()
         for project in self.root.glob("*/project.json"):
             for status in project.parent.glob("runs/*/status.json"):
                 record = read_json(status)
@@ -201,11 +264,15 @@ class ProjectStore:
             manifest.update(id=rid, project_id=pid, project_name=project["name"], fingerprint=fingerprint, engine_build=self.engine_build)
             manifest["output_hashes"] = {p.name: file_hash(p) for p in (run / "outputs").iterdir() if p.is_file() and p.name != "manifest.json"}
             write_json(run / "outputs" / "manifest.json", manifest)
-            write_json(run / "status.json", {"id": rid, "state": "completed", "message": "Project package saved", "progress": 100, "fingerprint": fingerprint})
+            final = {"id": rid, "state": "completed", "message": "Project package saved", "progress": 100, "fingerprint": fingerprint}
         except Exception as exc:
-            write_json(run / "status.json", {"id": rid, "state": "failed", "message": str(exc), "progress": 0, "fingerprint": fingerprint})
+            final = {"id": rid, "state": "failed", "message": str(exc), "progress": 0, "fingerprint": fingerprint}
         finally:
+            # The package already holds its own copy of the database; drop the working copy and spill
+            # before reporting the result, so a run reported finished has nothing left to clean up.
+            remove_path(runtime)
             self.busy = False
+        write_json(run / "status.json", final)
 
     def preview(self, pid, rid, table, disposition="accepted", offset=0, limit=100):
         status = self.run_status(pid, rid)
