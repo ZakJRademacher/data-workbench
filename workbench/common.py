@@ -10,6 +10,27 @@ from pathlib import Path
 
 VERSION = "2.2.2"
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def data_root():
+    """Per-user app data: %LOCALAPPDATA%/DataWorkbench (logs, working files, installed projects)."""
+    return Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / "DataWorkbench"
+
+
+def installed():
+    """True for a copy set up by the Windows installer, which writes installed.json beside the app."""
+    return (ROOT / "installed.json").is_file()
+
+
+def default_projects_root():
+    """Where projects live unless --projects or DATA_WORKBENCH_PROJECTS says otherwise.
+
+    A ZIP download keeps them in its own projects folder. An installed copy keeps them in the
+    user's app data, so upgrading or uninstalling the program never touches them.
+    """
+    if os.environ.get("DATA_WORKBENCH_PROJECTS"):
+        return Path(os.environ["DATA_WORKBENCH_PROJECTS"])
+    return data_root() / "projects" if installed() else ROOT / "projects"
 MAX_FILES = 50
 MAX_FILE_BYTES = 50 * 1024 * 1024
 MAX_TOTAL_BYTES = 250 * 1024 * 1024

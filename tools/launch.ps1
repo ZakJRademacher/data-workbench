@@ -54,6 +54,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 if ($Check) { exit 0 }
 $projectsPath = Join-Path $projectRoot 'projects'
+# An installed copy keeps projects in the user's app data (workbench.common.default_projects_root).
+if (Test-Path -LiteralPath (Join-Path $projectRoot 'installed.json')) { $projectsPath = Join-Path $env:LOCALAPPDATA 'DataWorkbench\projects' }
 # From 3.0 the app opens in its own window (workbench.desktop). pythonw.exe runs it without a
 # console, so this window closes once the app has started. -Browser keeps the 2.x behaviour:
 # the app opens in the default browser and this window stays open to stop it.

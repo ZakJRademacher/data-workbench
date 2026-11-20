@@ -25,17 +25,13 @@ import time
 import urllib.request
 from pathlib import Path
 
-from .common import ROOT, VERSION
+from .common import ROOT, VERSION, data_root, default_projects_root
 
 APP_ID = "ZakJRademacher.DataWorkbench"
 TITLE = "Data Workbench"
 ICON = ROOT / "packaging" / "workbench.ico"
 INSTANCE = ".desktop-instance.json"
 log = logging.getLogger("workbench.desktop")
-
-
-def data_root():
-    return Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / "DataWorkbench"
 
 
 def setup_logging():
@@ -118,7 +114,7 @@ def browser_fallback(root, reason):
 
 
 def projects_root(arg=None):
-    return Path(arg or os.environ.get("DATA_WORKBENCH_PROJECTS") or ROOT / "projects").resolve()
+    return Path(arg or default_projects_root()).resolve()
 
 
 def main(argv=None):
@@ -199,6 +195,12 @@ def run_window(app, url):
         window.on_top = False
 
     app.state.desktop_focus = focus
+
+    def choose_folder():
+        chosen = window.create_file_dialog(webview.FileDialog.FOLDER)
+        return str(chosen[0]) if chosen else None
+
+    app.state.desktop_choose_folder = choose_folder
 
     def closing():
         if store.busy and not message("A run is still processing. Close Data Workbench anyway?\n\n"
