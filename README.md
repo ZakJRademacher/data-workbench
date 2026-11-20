@@ -4,13 +4,19 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[Download for Windows](https://github.com/ZakJRademacher/data-workbench/releases/latest) · [View the workspace](docs/images/review-2.2.2.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[Download for Windows](https://github.com/ZakJRademacher/data-workbench/releases/latest) · [View the workspace](docs/images/review-3.0.0.png) · [Reconcile payments](docs/images/reconcile-3.0.0.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
-![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.2.2.png)
+![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-3.0.0.png)
 
 ## Open the app
 
-On 64-bit Windows, download `Data-Workbench-<version>-windows-x64.zip` from the latest release (from 2.3.0). Fully extract it into a writable folder with a short path, such as `C:\DataWorkbench`, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The ZIP carries its own Python 3.14 and the pinned dependencies in `runtime\python`, so nothing needs to be installed and the first launch works offline. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. To upgrade, stop the app, extract the new version into a new folder, and copy your `projects` folder across.
+From 3.0, Data Workbench opens as a Windows program in its own window, with no browser tab or terminal window to keep open. It needs 64-bit Windows 10 or 11, which already include the Microsoft Edge WebView2 engine the window uses.
+
+**Install it.** Download `Data-Workbench-<version>-setup.exe` from the latest release and run it. It installs for your Windows account only, without administrator rights, and adds **Data Workbench** to the Start menu. Projects are kept in `%LOCALAPPDATA%\DataWorkbench\projects`, outside the program folder, so upgrading (run the newer setup) or uninstalling never removes them. The setup is not yet code-signed, so Windows SmartScreen may say it doesn't recognize the app the first time: choose **More info**, then **Run anyway**.
+
+**Or use the ZIP, with nothing installed.** Download `Data-Workbench-<version>-windows-x64.zip`, fully extract it into a writable folder with a short path, such as `C:\DataWorkbench`, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. It carries its own Python 3.14 and the pinned dependencies in `runtime\python`, so the first launch works offline. Projects stay in its own `projects` folder.
+
+Coming from an earlier download? Open **Storage location** in the app and choose **Bring in projects from another folder** to copy them across. Projects already present are never overwritten, and every copied file is checked against the original. If the window cannot open, the app falls back to the browser at **http://127.0.0.1:8810** with a terminal window, as in 2.x.
 
 The smaller `Data-Workbench-<version>.zip` holds the same app without Python. It needs standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/). Its first launch needs internet access and installs the pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
 
@@ -36,9 +42,13 @@ The first run has **20 input records = 14 accepted + 6 needing review**. Accepte
 
 There are two conflicting customer copies, one ambiguous order date, one invalid amount, and two copies of the same order. The fixtures are original fictional data, with no assumed currency. See [the operating guide](docs/OPERATING_GUIDE.md) for the demo walkthrough and expected results.
 
-## Try payout reconciliation
+## Reconcile payments
 
-The command-line reconciliation preview matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. Version 2.2.0 can use an earlier monthly close to distinguish a payout that remains open from one already booked. The QuickBooks profile was verified against native CSV and Excel exports from Intuit's sample company. Stripe and paired-export verification remains open.
+Choose **Reconcile payments** in the sidebar, add the exports, and pick the month. The screen shows the tie-out, each item that needs attention with the records behind it, and downloads of every file. Each reconciliation is saved with its exports kept unchanged and their SHA-256 fingerprints. Naming the bank account saves that month's close, which the next month can carry forward. The screens run the same reconciliation as the command line below, so both write identical files.
+
+![Payout reconciliation screen with the tie-out and items needing attention](docs/images/reconcile-3.0.0.png)
+
+The reconciliation matches Stripe payouts to QuickBooks deposits, checks payout arithmetic when given an itemized report, and writes a tie-out with exceptions for review. Version 2.2.0 can use an earlier monthly close to distinguish a payout that remains open from one already booked. The QuickBooks profile was verified against native CSV and Excel exports from Intuit's sample company. Stripe and paired-export verification remains open.
 
 After the first Windows launch, open PowerShell in the extracted `data-workbench` folder. These commands use the Python the launcher uses, bundled or set up on first launch:
 

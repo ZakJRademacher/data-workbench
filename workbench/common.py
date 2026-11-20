@@ -8,7 +8,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "2.2.2"
+VERSION = "3.0.0"
 ROOT = Path(__file__).resolve().parents[1]
 
 

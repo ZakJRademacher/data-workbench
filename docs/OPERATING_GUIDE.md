@@ -4,7 +4,7 @@ The fictional demo shows the full workflow: inspect files, choose rules, review 
 
 ## The first five minutes
 
-1. Open `Start Workbench.cmd` and choose **Explore the demo**.
+1. Open **Data Workbench** from the Start menu (or `Start Workbench.cmd` in the ZIP download) and choose **Explore the demo**.
 2. Inspect the four source files. The February workbook has a title row, so the app selects row 2 as its header. CSV and Excel order exports map into the same `orders` table despite alternate headings.
 3. Open **Recipe & relationships**. Text keeps IDs such as `001`. Customers use `customer_id` as a key; orders use `order_id`; payments use `payment_id`. The saved region mapping changes `E` to `East`.
 4. Click **Run project**. The result has 20 parsed rows, 14 accepted, and 6 requiring review. The raw inputs are unchanged.
@@ -81,10 +81,14 @@ Version 2 reads version-1 recipes with their previous defaults, then saves new e
 
 ## Storage and reproducibility
 
-Source, documents, evidence, and completed runs live together in the extracted app folder. Actual user projects are under `projects/` and excluded from Git and release downloads. While a run is processing, its working database and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`. They are removed when the run finishes or fails, or on the next start after an interruption; completed packages keep their own closed database copies. Export zips are built there per download and deleted once sent. Old source versions and run snapshots remain available on disk.
+An installed copy keeps projects in `%LOCALAPPDATA%/DataWorkbench/projects`, outside the program folder, so upgrades and uninstalling never touch them. A ZIP download keeps them in its own `projects/` folder, which is excluded from Git and release downloads. **Storage location** shows the folder in use and can copy projects in from another folder, such as an earlier download: existing projects are never overwritten, each copied file is checked against the original, and runs left unfinished arrive marked interrupted. Payment reconciliations are saved beside the projects, under `reconciliations/`. While a run is processing, its working database and spill files live under `%LOCALAPPDATA%/DataWorkbench/runtime`. They are removed when the run finishes or fails, or on the next start after an interruption; completed packages keep their own closed database copies. Export zips are built there per download and deleted once sent. Old source versions and run snapshots remain available on disk.
 
 Files are processed on your computer. If you store projects in OneDrive, synchronization is handled separately by OneDrive.
 
 Version-1 recipes migrate with earlier option defaults. Historical inputs, decisions and run snapshots are preserved. New recipes use version 2 and cannot be opened by the earlier app.
 
-To move a project, stop processing and copy its entire `projects/<project-id>/` folder into the destination app's `projects/` folder. A recipe alone contains source identifiers, so importing it into a different project requires updating its source mappings.
+To move projects, use **Storage location → Bring in projects from another folder**, or close the app and copy each entire `<project-id>/` folder into the destination projects folder. A recipe alone contains source identifiers, so importing it into a different project requires updating its source mappings.
+
+## The desktop window
+
+The app runs as a Windows program: a small local server on a free `127.0.0.1` port and a window that shows it. Closing the window stops the app; if a run is still processing it asks first, and a run closed this way is marked interrupted on the next start. Opening the app again while it is open brings the existing window forward. Its log is `%LOCALAPPDATA%/DataWorkbench/logs/desktop.log`. If the window cannot be created, the app opens in the browser with a terminal window instead; `tools/launch.ps1 -Browser` chooses that mode deliberately.
