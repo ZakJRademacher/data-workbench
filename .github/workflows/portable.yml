@@ -1,4 +1,4 @@
-name: Windows download with bundled Python
+name: Windows download and installer
 on:
   push:
   pull_request:
@@ -9,7 +9,8 @@ permissions:
 jobs:
   portable:
     # Build the no-install Windows download, then start it as a user would with
-    # every installed Python hidden from PATH and run the built-in demo.
+    # every installed Python hidden from PATH and run the built-in demo. Then wrap
+    # that same download in the setup program and install, upgrade and uninstall it.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -26,6 +27,15 @@ jobs:
           $zip = Get-ChildItem dist/*-windows-x64.zip | Select-Object -First 1
           python tools/clean_install_check.py --archive $zip.FullName --portable --workdir "$env:RUNNER_TEMP\portable" --evidence "$env:RUNNER_TEMP\portable\evidence.json"
           Copy-Item "$env:RUNNER_TEMP\portable\evidence.json" dist/portable-check.json
+      - name: Build the setup program from the checked download
+        run: |
+          choco install innosetup --no-progress -y
+          $zip = Get-ChildItem dist/*-windows-x64.zip | Select-Object -First 1
+          python -B tools/build_installer.py --download $zip.FullName
+      - name: Install, start, upgrade and uninstall it as a user would
+        run: |
+          $setup = Get-ChildItem dist/*-setup.exe | Select-Object -First 1
+          python tools/installer_check.py --setup $setup.FullName --evidence dist/installer-check.json
       - uses: actions/upload-artifact@v7
         with:
           name: windows-download
@@ -49,4 +59,5 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           test -f "dist/Data-Workbench-$version-windows-x64.zip" || { echo "No download for $version: check workbench/common.py VERSION"; exit 1; }
-          gh release upload "$GITHUB_REF_NAME" dist/Data-Workbench-$version-windows-x64.zip dist/Data-Workbench-$version-windows-x64.json --repo "$GITHUB_REPOSITORY" --clobber
+          test -f "dist/Data-Workbench-$version-setup.exe" || { echo "No setup program for $version"; exit 1; }
+          gh release upload "$GITHUB_REF_NAME" dist/Data-Workbench-$version-windows-x64.zip dist/Data-Workbench-$version-windows-x64.json dist/Data-Workbench-$version-setup.exe dist/Data-Workbench-$version-setup.json --repo "$GITHUB_REPOSITORY" --clobber

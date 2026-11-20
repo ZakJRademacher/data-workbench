@@ -1,0 +1,4 @@
+{
+  "installer": "Inno Setup",
+  "projects": "%LOCALAPPDATA%/DataWorkbench/projects"
+}

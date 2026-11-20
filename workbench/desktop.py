@@ -32,6 +32,7 @@ TITLE = "Data Workbench"
 ICON = ROOT / "packaging" / "workbench.ico"
 INSTANCE = ".desktop-instance.json"
 log = logging.getLogger("workbench.desktop")
+_running = None  # the named mutex this process holds while open
 
 
 def setup_logging():
@@ -130,6 +131,9 @@ def main(argv=None):
         return 0
     if os.name == "nt":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+        # Held while the app runs; the installer and uninstaller (AppMutex) ask to close it first.
+        global _running
+        _running = ctypes.windll.kernel32.CreateMutexW(None, False, APP_ID)
 
     from .app import create_app
     app = create_app(root)
@@ -155,8 +159,8 @@ def main(argv=None):
     try:
         if args.check:
             with urllib.request.urlopen(url + "api/session", timeout=5) as reply:
-                version = json.load(reply)["version"]
-            print("Data Workbench", version, "answered at", url)
+                session = json.load(reply)
+            print("Data Workbench", session["version"], "answered at", url, "with projects in", session["project_root"])
             return 0
         try:
             run_window(app, url)
