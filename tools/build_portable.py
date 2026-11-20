@@ -16,6 +16,8 @@ import platform
 import shutil
 import subprocess
 import sys
+import sysconfig
+import tempfile
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -23,7 +25,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from workbench.common import VERSION
-from tools.package_release import TEXT,release_paths
+from tools.package_release import FOLDERS,TEXT,release_paths
 
 PYTHON={'version':'3.14.10',
         'url':'https://www.python.org/ftp/python/3.14.10/python-3.14.10-embed-amd64.zip',
@@ -55,8 +57,11 @@ def fetch_python(cache):
 
 def install_packages(site,cross):
     major,minor=PYTHON['version'].split('.')[:2]
+    # A free-threaded build would make pip pick cp314t wheels, which the bundled
+    # standard interpreter cannot load.
     native=(sys.platform=='win32' and platform.machine().lower() in {'amd64','x86_64'}
-            and sys.implementation.name=='cpython' and f'{sys.version_info[0]}.{sys.version_info[1]}'==f'{major}.{minor}')
+            and sys.implementation.name=='cpython' and f'{sys.version_info[0]}.{sys.version_info[1]}'==f'{major}.{minor}'
+            and not sysconfig.get_config_var('Py_GIL_DISABLED'))
     if not native and not cross:
         raise SystemExit(f'Build with 64-bit Windows CPython {major}.{minor}, or pass --cross for a trial build.')
     command=[sys.executable,'-m','pip','install','--disable-pip-version-check','--no-compile','--no-deps',
@@ -76,12 +81,21 @@ def main():
     parser.add_argument('--cross',action='store_true',help='allow a trial build from a non-matching Python')
     args=parser.parse_args()
     output=(args.output or ROOT/f'dist/Data-Workbench-{VERSION}-windows-x64.zip').resolve()
-    stage=args.cache/'stage'
-    shutil.rmtree(stage,ignore_errors=True)
+    cache=args.cache.resolve()
+    # Anything inside the app folders would be packed into the download itself.
+    for path in (output,cache):
+        if any(path.is_relative_to(ROOT/folder) for folder in FOLDERS):
+            raise SystemExit(f'{path} is inside the app files; choose a location outside {", ".join(sorted(FOLDERS))}.')
+    cache.mkdir(parents=True,exist_ok=True)
+    stage=Path(tempfile.mkdtemp(prefix='stage-',dir=cache))
+    try:build(output,cache,stage,args.cross)
+    finally:shutil.rmtree(stage,ignore_errors=True)
+
+def build(output,cache,stage,cross):
     runtime=stage/'runtime';python=runtime/'python'
-    with zipfile.ZipFile(fetch_python(args.cache)) as archive:archive.extractall(python)
+    with zipfile.ZipFile(fetch_python(cache)) as archive:archive.extractall(python)
     (python/f'{TAG}._pth').write_bytes(PTH.encode('ascii'))
-    native=install_packages(python/'Lib/site-packages',args.cross)
+    native=install_packages(python/'Lib/site-packages',cross)
     lock=[line.strip() for line in (ROOT/'requirements.lock.txt').read_text(encoding='utf-8').splitlines() if line.strip()]
     marker={'app_version':VERSION,'python':PYTHON['version'],'python_sha256':PYTHON['sha256'],
             'python_source':PYTHON['url'],'packages':lock,'native_build':native}

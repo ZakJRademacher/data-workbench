@@ -38,3 +38,8 @@ jobs:
           $record = Get-Content ($zip.FullName -replace '\.zip$', '.json') | ConvertFrom-Json
           if ((Get-FileHash $zip.FullName -Algorithm SHA256).Hash -ne $record.sha256.ToUpper()) { throw 'Release zip does not match its recorded hash.' }
           python tools/clean_install_check.py --archive $zip.FullName --workdir "$env:RUNNER_TEMP\clean" --python "${{ steps.python.outputs.python-path }}" --evidence "$env:RUNNER_TEMP\clean\evidence.json"
+      - name: Install a download built from this commit
+        # The committed ZIP holds the released launcher; this checks the launcher as it is now.
+        run: |
+          python -B tools/package_release.py --output "$env:RUNNER_TEMP\current\Data-Workbench-current.zip"
+          python tools/clean_install_check.py --archive "$env:RUNNER_TEMP\current\Data-Workbench-current.zip" --workdir "$env:RUNNER_TEMP\clean-current" --python "${{ steps.python.outputs.python-path }}" --evidence "$env:RUNNER_TEMP\clean-current\evidence.json"
