@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from workbench.common import VERSION
-FOLDERS={'workbench','web','tests','tools','docs','licenses','evidence'}
+FOLDERS={'workbench','web','tests','tools','docs','licenses','evidence','packaging'}
 TEXT={'.py','.md','.txt','.json','.cmd','.ps1','.js','.mjs','.css','.html','.csv','.svg','.toml','.yml'}
 FILES={'.gitignore','LICENSE','README.md','requirements.txt','requirements.lock.txt','requirements-dev.txt','Start Workbench.cmd'}
 

@@ -75,6 +75,12 @@ def main():
             manifest=json.loads(archive.read('manifest.json'))
             for filename,expected in manifest['output_hashes'].items():
                 assert hashlib.sha256(archive.read(filename)).hexdigest()==expected
+        # From 3.0 the shortcut opens the app in its own window: the window engine (pywebview over
+        # .NET and WebView2) must load, and the desktop entry point must serve on a free port.
+        subprocess.run([str(python),'-B','-c','import webview; from webview.platforms import winforms'],check=True,cwd=root,env=env)
+        desktop=subprocess.run([str(python),'-B','-m','workbench.desktop','--projects',str(scratch/'desktop-projects'),'--check'],
+                               cwd=root,env=env,capture_output=True,text=True,check=True)
+        assert 'answered at http://127.0.0.1:' in desktop.stdout,desktop.stdout+desktop.stderr
         version=subprocess.check_output([str(python),'-c','import sys; print(sys.version.split()[0])'],text=True).strip()
         record={'passed':True,'archive_sha256':hashlib.sha256(args.archive.read_bytes()).hexdigest(),
                 'python':version,'server_executable':str(Path(owner).relative_to(scratch)) if args.portable else 'environment venv',

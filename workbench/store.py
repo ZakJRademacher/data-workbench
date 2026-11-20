@@ -90,12 +90,30 @@ class ProjectStore:
         sweep_runtime(base, keep=session)
         self.runtime = base / session
         self.runtime.mkdir()
+        # The first session on a projects folder holds its lock. Only that session may treat runs
+        # left "queued" or "running" as interrupted; a second session on the same folder (a browser
+        # copy beside the desktop window, say) must not relabel runs the first is still processing.
+        self._root_lock = open(self.root / ".workbench.lock", "a+b")
+        self.primary = try_lock(self._root_lock)
+        if not self.primary:
+            self._root_lock.close()
+            self._root_lock = None
+            return
         for project in self.root.glob("*/project.json"):
             for status in project.parent.glob("runs/*/status.json"):
                 record = read_json(status)
                 if record["state"] in ("queued", "running"):
                     record.update(state="interrupted", message="The previous app session ended. Run again to rebuild; no completed package was published.")
                     write_json(status, record)
+
+    def close(self):
+        """Release this session's locks. A run still processing is left to finish or be interrupted."""
+        self.worker.shutdown(wait=not self.busy, cancel_futures=True)
+        for name in ("_root_lock", "_session_lock"):
+            handle = getattr(self, name, None)
+            if handle is not None:
+                handle.close()
+                setattr(self, name, None)
 
     def path(self, project_id):
         if not isinstance(project_id, str) or len(project_id) != 32 or any(c not in "0123456789abcdef" for c in project_id):

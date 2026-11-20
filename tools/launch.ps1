@@ -1,4 +1,4 @@
-param([switch]$Check, [switch]$NoBrowser, [string]$PythonPath, [string]$EnvironmentRoot)
+param([switch]$Check, [switch]$NoBrowser, [switch]$Browser, [string]$PythonPath, [string]$EnvironmentRoot)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($EnvironmentRoot) { $environmentRoot = [IO.Path]::GetFullPath($EnvironmentRoot) } else { $environmentRoot = Join-Path $env:LOCALAPPDATA 'DataWorkbench\venv' }
@@ -54,6 +54,16 @@ if ($LASTEXITCODE -ne 0) {
 }
 if ($Check) { exit 0 }
 $projectsPath = Join-Path $projectRoot 'projects'
+# From 3.0 the app opens in its own window (workbench.desktop). pythonw.exe runs it without a
+# console, so this window closes once the app has started. -Browser keeps the 2.x behaviour:
+# the app opens in the default browser and this window stays open to stop it.
+if (-not $Browser -and -not $NoBrowser) {
+    $windowPython = Join-Path (Split-Path -Parent $environmentPython) 'pythonw.exe'
+    if (-not (Test-Path -LiteralPath $windowPython)) { $windowPython = $environmentPython }
+    Start-Process -FilePath $windowPython -WorkingDirectory $projectRoot -ArgumentList @('-B', '-m', 'workbench.desktop', '--projects', ('"' + $projectsPath + '"'))
+    Write-Host 'Data Workbench is opening in its own window.'
+    exit 0
+}
 try {
     $existing = Invoke-RestMethod -Uri 'http://127.0.0.1:8810/api/session' -TimeoutSec 2
 } catch { $existing = $null }

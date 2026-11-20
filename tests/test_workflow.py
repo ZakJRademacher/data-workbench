@@ -163,7 +163,9 @@ def test_output_tampering_rebuild_and_restart(store, tmp_path):
     assert second["id"] != first["id"]
     fake = store.run_dir(pid, "deadbeef")
     write_json(fake / "status.json", {"id": "deadbeef", "state": "running", "fingerprint": "", "progress": 10, "message": "in progress"})
+    store.close()  # the app session ends; the next one finds the run it left unfinished
     reopened = ProjectStore(store.root)
+    assert reopened.primary
     assert reopened.run_status(pid, "deadbeef")["state"] == "interrupted"
     assert reopened.get(pid)["latest_run"] == second["id"]
     reopened.worker.shutdown()

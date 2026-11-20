@@ -30,6 +30,7 @@ from tools.package_release import FOLDERS,TEXT,release_paths
 PYTHON={'version':'3.14.10',
         'url':'https://www.python.org/ftp/python/3.14.10/python-3.14.10-embed-amd64.zip',
         'sha256':'90905e64a840557d8c1bc4f5b74db3d7ee85e3ffb217611cac1c7813acea4159'}
+SOURCE_ONLY=('proxy-tools',)  # pins with no wheel on PyPI; see install_packages
 TAG='python'+''.join(PYTHON['version'].split('.')[:2])  # python314
 # Paths in a ._pth file are relative to the file. `..\..` is the app root, so
 # `-m workbench.app` resolves; site stays disabled, so PYTHONPATH and user
@@ -64,8 +65,20 @@ def install_packages(site,cross):
             and not sysconfig.get_config_var('Py_GIL_DISABLED'))
     if not native and not cross:
         raise SystemExit(f'Build with 64-bit Windows CPython {major}.{minor}, or pass --cross for a trial build.')
+    # A few pure-Python pins publish only a source archive. Build each into a wheel first (the
+    # result has no compiled parts, so it suits the target whatever machine builds it), then
+    # install everything from wheels.
+    wheels=Path(tempfile.mkdtemp(prefix='workbench-wheels-'))
+    lock=(ROOT/'requirements.lock.txt').read_text(encoding='utf-8').splitlines()
+    for name in SOURCE_ONLY:
+        pin=next(line.split(';')[0].strip() for line in lock if line.lower().startswith(name+'=='))
+        subprocess.run([sys.executable,'-m','pip','wheel','--disable-pip-version-check','--no-deps','--no-binary',name,
+                        '--wheel-dir',str(wheels),pin],check=True)
+        built=list(wheels.glob(name.replace('-','_')+'-*.whl'))
+        if len(built)!=1 or not built[0].name.endswith('-py3-none-any.whl'):
+            raise SystemExit(f'{pin} did not build into one pure-Python wheel: {[p.name for p in built]}')
     command=[sys.executable,'-m','pip','install','--disable-pip-version-check','--no-compile','--no-deps',
-             '--only-binary=:all:','--target',str(site),'-r',str(ROOT/'requirements.lock.txt')]
+             '--only-binary=:all:','--find-links',str(wheels),'--target',str(site),'-r',str(ROOT/'requirements.lock.txt')]
     if not native:
         command+=['--platform','win_amd64','--implementation','cp','--python-version',f'{major}.{minor}','--abi',f'cp{major}{minor}']
     subprocess.run(command,check=True)
