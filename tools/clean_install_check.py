@@ -17,7 +17,10 @@ def main():
     parser.add_argument('--portable',action='store_true',help='the archive carries its own Python; use no other')
     parser.add_argument('--evidence',type=Path,required=True);args=parser.parse_args()
     if args.portable==bool(args.python):parser.error('pass exactly one of --python or --portable')
-    scratch=args.workdir.resolve();scratch.mkdir(parents=True,exist_ok=True)
+    scratch=args.workdir.resolve()
+    # Leftovers from an earlier run could stand in for files the archive lacks.
+    if scratch.exists() and any(scratch.iterdir()):parser.error(f'{scratch} is not empty; use a new work folder')
+    scratch.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(args.archive) as archive:
         assert all(not n.startswith(('/', '\\')) and '..' not in Path(n).parts for n in archive.namelist())
         archive.extractall(scratch/'download')

@@ -4,13 +4,13 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[Download for Windows (2.2.1)](https://github.com/ZakJRademacher/data-workbench/releases/download/v2.2.1/Data-Workbench-2.2.1.zip) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+[Download for Windows](https://github.com/ZakJRademacher/data-workbench/releases/latest) · [View the workspace](docs/images/review-2.0.1.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-2.0.1.png)
 
 ## Open the app
 
-On 64-bit Windows, download `Data-Workbench-<version>-windows-x64.zip`. Fully extract it into a writable folder with a short path, such as `C:\DataWorkbench`, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The ZIP carries its own Python 3.14 and the pinned dependencies in `runtime\python`, so nothing needs to be installed and the first launch works offline. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. To upgrade, stop the app, extract the new version into a new folder, and copy your `projects` folder across.
+On 64-bit Windows, download `Data-Workbench-<version>-windows-x64.zip` from the latest release (from 2.3.0). Fully extract it into a writable folder with a short path, such as `C:\DataWorkbench`, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. The ZIP carries its own Python 3.14 and the pinned dependencies in `runtime\python`, so nothing needs to be installed and the first launch works offline. The local app opens at **http://127.0.0.1:8810**. Keep its terminal window open while working; Ctrl+C stops it. To upgrade, stop the app, extract the new version into a new folder, and copy your `projects` folder across.
 
 The smaller `Data-Workbench-<version>.zip` holds the same app without Python. It needs standard **64-bit Python 3.12 or newer** from [python.org](https://www.python.org/downloads/windows/). Its first launch needs internet access and installs the pinned dependencies into `%LOCALAPPDATA%/DataWorkbench/venv`. A standard Anaconda/Miniconda installation is also recognized. For a custom installation set `DATA_WORKBENCH_PYTHON` to its Python executable.
 
