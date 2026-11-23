@@ -176,7 +176,7 @@ def partition_large(path,work):
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--cache',type=Path,required=True);parser.add_argument('--workdir',type=Path,required=True)
-    parser.add_argument('--old-project',type=Path,required=True);parser.add_argument('--case',default='all')
+    parser.add_argument('--old-project',type=Path,help='Unused; kept so older recorded commands still run.');parser.add_argument('--case',default='all')
     args=parser.parse_args();cache=args.cache.resolve();scratch=args.workdir.resolve();scratch.mkdir(parents=True,exist_ok=True)
     os.environ['DATA_WORKBENCH_RUNTIME']=str(scratch/'runtime');store=ProjectStore(scratch/'projects')
     evidence=ROOT/'evidence/external';evidence.mkdir(parents=True,exist_ok=True)

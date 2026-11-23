@@ -24,6 +24,8 @@ def main():
     p.add_argument('--labels',type=Path,help='Independent seeded ground-truth labels, separate from the old reference.')
     p.add_argument('--evidence',type=Path,help='Write a new verification record without replacing historical release evidence.')
     args=p.parse_args();old=args.old_project.resolve();work=args.workdir.resolve();work.mkdir(parents=True,exist_ok=True)
+    if not (old/'src/consolidate.py').is_file():
+        p.error(f'{old} is not a copy of the retired Excel workbook project (src/consolidate.py is missing). That project is no longer published; see docs/COMPARISON.md for the recorded results.')
     spec=importlib.util.spec_from_file_location('original_sales_reference',old/'src/consolidate.py');reference=importlib.util.module_from_spec(spec);spec.loader.exec_module(reference)
     before=time.perf_counter();expected=reference.consolidate(args.input);old_seconds=time.perf_counter()-before
     os.environ['DATA_WORKBENCH_RUNTIME']=str(work/'runtime');store=ProjectStore(work/'projects');pid=store.create('Compatibility '+args.name)['id']
