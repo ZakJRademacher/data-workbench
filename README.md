@@ -4,15 +4,17 @@ Data Workbench is a local app for preparing related CSV and Excel files. You can
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
-[Download for Windows](https://github.com/ZakJRademacher/data-workbench/releases/latest) · [View the workspace](docs/images/review-3.0.0.png) · [Reconcile payments](docs/images/reconcile-3.0.0.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
+**[Download for Windows](https://github.com/ZakJRademacher/data-workbench/releases/latest)** · [View the workspace](docs/images/review-3.0.0.png) · [Reconcile payments](docs/images/reconcile-3.0.0.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
 
 ![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-3.0.0.png)
+
+> **About the Windows warning.** The setup isn't code-signed yet, so the first time you run it Windows SmartScreen may say it "protected your PC" because it doesn't recognize the app. Choose **More info**, then **Run anyway**. The download comes only from this repository's releases page, and every release is built by its [public workflow](.github/workflows/portable.yml).
 
 ## Open the app
 
 From 3.0, Data Workbench opens as a Windows program in its own window, with no browser tab or terminal window to keep open. It needs 64-bit Windows 10 or 11, which already include the Microsoft Edge WebView2 engine the window uses.
 
-**Install it.** Download `Data-Workbench-<version>-setup.exe` from the latest release and run it. It installs for your Windows account only, without administrator rights, and adds **Data Workbench** to the Start menu. Projects are kept in `%LOCALAPPDATA%\DataWorkbench\projects`, outside the program folder, so upgrading (run the newer setup) or uninstalling never removes them. The setup is not yet code-signed, so Windows SmartScreen may say it doesn't recognize the app the first time: choose **More info**, then **Run anyway**.
+**Install it.** Download `Data-Workbench-<version>-setup.exe` from the latest release and run it. It installs for your Windows account only, without administrator rights, and adds **Data Workbench** to the Start menu. Projects are kept in `%LOCALAPPDATA%\DataWorkbench\projects`, outside the program folder, so upgrading (run the newer setup) or uninstalling never removes them. The first time, Windows may show the SmartScreen warning described above.
 
 **Or use the ZIP, with nothing installed.** Download `Data-Workbench-<version>-windows-x64.zip`, fully extract it into a writable folder with a short path, such as `C:\DataWorkbench`, then double-click **[Start Workbench.cmd](Start%20Workbench.cmd)**. It carries its own Python 3.14 and the pinned dependencies in `runtime\python`, so the first launch works offline. Projects stay in its own `projects` folder.
 
