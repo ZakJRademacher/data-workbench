@@ -10,7 +10,6 @@ import zipfile
 from pathlib import Path
 from datetime import datetime, timezone
 
-LIBRARY = Path.home() / 'projects'
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -81,16 +80,14 @@ def main():
         'Complete 9994-row cached source','Existing October 29 download; SHA-256 verified against prior acquisition evidence',
         {'filename':super_metadata.name,'sha256':sha(super_metadata),'licenseName':json.loads(super_metadata.read_text())['licenseName']})
     olist=cache/'olist';olist.mkdir(exist_ok=True)
-    original=LIBRARY/'projects/commerce-operations-powerbi'
     manifest_path=olist/'prior-source-manifest.json'
     if manifest_path.exists():manifest=json.loads(manifest_path.read_text())
-    elif (original/'data/processed/snapshots/954dbeb91a2096f6/manifest.json').exists():manifest=json.loads((original/'data/processed/snapshots/954dbeb91a2096f6/manifest.json').read_text())
     else:raise RuntimeError('Download the six documented Olist files from Kaggle, then use the frozen source hashes in evidence/external-source-manifest.json to prepare prior-source-manifest.json.')
     (olist/'prior-source-manifest.json').write_text(json.dumps(manifest,indent=2))
     files=[]
     for filename,expected in manifest['source_hashes'].items():
         target=olist/filename
-        if not target.exists():shutil.copyfile(original/'data/raw'/filename,target)
+        if not target.exists():raise RuntimeError(f'Download the Olist file {filename} from Kaggle and place it in {olist}.')
         if sha(target)!=expected:raise RuntimeError('Olist source fingerprint changed: '+filename)
         files.append(target)
     olist_metadata=olist/'kaggle-view-metadata.json'
