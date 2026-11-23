@@ -71,12 +71,8 @@ def main():
         selection=json.loads((folder/'selection.json').read_text()) if (folder/'selection.json').exists() else {'query':query,'rows':count}
         record(name,f'https://{domain}/d/{view}',[path],metadata.get('licenseId') or 'See publisher terms; no bulk redistribution',selection)
     superstore=cache/'superstore';superstore.mkdir(exist_ok=True)
-    job=LIBRARY/'earlier-project/local-data/workbench/jobs/ed70472a5bde78ebf06548051e1988a0a82506e732e9a17bcd77121018d61d9a'
     target=superstore/'Sample - Superstore.csv'
-    if not target.exists():
-        source=next(job.rglob('00.csv'),None)
-        if source is None:raise RuntimeError('Download the Superstore CSV from the documented Kaggle page and place it in cache/superstore/Sample - Superstore.csv.')
-        shutil.copyfile(source,target)
+    if not target.exists():raise RuntimeError('Download the Superstore CSV from the documented Kaggle page and place it in cache/superstore/Sample - Superstore.csv.')
     if sha(target)!='58fb59c63089e564d835e4aabe19d371757de1137a5bf1888243ae386c4b7a97':raise RuntimeError('Superstore hash does not match the frozen benchmark version')
     super_metadata=superstore/'kaggle-view-metadata.json'
     download('https://www.kaggle.com/api/v1/datasets/view/vivek468/superstore-dataset-final',super_metadata)

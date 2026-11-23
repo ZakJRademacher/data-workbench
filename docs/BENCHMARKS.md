@@ -22,7 +22,7 @@ UCI attribution: Daqing Chen (2015), *Online Retail*, UCI Machine Learning Repos
 
 ## Commands
 
-Examples below use `C:/Temp/WorkbenchBenchmark` for disposable data. Commands that pass `<reference-project>` need a copy of the retired Excel project, which is no longer published; their recorded results are kept in [COMPARISON.md](COMPARISON.md).
+Examples below use `C:/Temp/WorkbenchBenchmark` for disposable data. Commands that pass `<reference-project>` need a copy of the earlier Excel workbook project, which is no longer published; their recorded results are kept in [COMPARISON.md](COMPARISON.md).
 
 1. Download the Kaggle datasets from their linked pages. Put Superstore at `C:/Temp/WorkbenchBenchmark/inputs/superstore/Sample - Superstore.csv` and the six documented Olist CSVs under `inputs/olist/`. Create `inputs/olist/prior-source-manifest.json` as `{"source_hashes": {"filename.csv": "sha256", ...}}` using the frozen per-file hashes. Do not substitute unrelated Superstore variants.
 2. Fetch public sources and freeze the manifest. The acquisition helper can reuse verified local historical Kaggle copies; an independent reader can supply the same frozen files directly.
