@@ -17,16 +17,16 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
 
-from .common import MAX_FILE_BYTES, ROOT, VERSION, WorkbenchError, default_projects_root, dumps, file_hash, installed
+from .common import MAX_FILE_BYTES, ROOT, VERSION, WorkbenchError, contained, default_projects_root, dumps, file_hash, installed
 from .demo import create_demo
 from .reconciliations import KINDS, PLATFORMS, Reconciliations
 from .store import ProjectStore, remove_path
 
 
-def allowed_host(host, port):
+def allowed_host(host, port, server=None):
     """The Host header must name this loopback server exactly, which defeats DNS rebinding."""
-    if host == "testserver":  # the in-process test client
-        return True
+    if host == "testserver":  # the in-process test client; a socket server's own address is never this
+        return server == "testserver"
     name, separator, given = host.rpartition(":")
     if not separator:
         name, given = host, "80"
@@ -54,7 +54,8 @@ def create_app(project_root=None):
     @app.middleware("http")
     async def protect(request, call_next):
         host = request.headers.get("host", "")
-        if not allowed_host(host, (request.scope.get("server") or (None, None))[1]):
+        server, port = request.scope.get("server") or (None, None)
+        if not allowed_host(host, port, server):
             return response({"error": "Localhost requests only."}, 403)
         # Browsers label each request with where it came from. Only this app's own pages (or the
         # address typed or opened directly) may use it; a page on another site or another local
@@ -145,7 +146,8 @@ def create_app(project_root=None):
         if not upload or not hasattr(upload, "file"):
             await form.close()
             raise WorkbenchError("Choose a CSV or XLSX file.")
-        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(upload.filename or "").suffix) as temporary:
+        suffix = Path(upload.filename or "").suffix.lower()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix if suffix in (".csv", ".xlsx") else "") as temporary:
             while block := upload.file.read(1024 * 1024):
                 temporary.write(block)
         return form, upload.filename, Path(temporary.name)
@@ -226,12 +228,6 @@ def create_app(project_root=None):
             raise WorkbenchError("This run has no published package. Run it again after resolving the error.")
         root = store.run_dir(pid, rid) / "outputs"
         return root, status["manifest"]
-
-    def contained(root, names):
-        # A manifest copied in from elsewhere must not name files outside its own outputs folder.
-        for name in names:
-            if not isinstance(name, str) or Path(name).name != name or name in ("", ".", "..") or (root / name).is_symlink():
-                raise WorkbenchError("This run's manifest names a file outside its outputs. Rerun to rebuild the package.")
 
     @app.get("/api/projects/{pid}/runs/{rid}/files/{filename}")
     def download(pid: str, rid: str, filename: str):

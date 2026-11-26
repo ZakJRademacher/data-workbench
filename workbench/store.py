@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import os
+import re
 import shutil
 import threading
 import uuid
@@ -11,7 +12,7 @@ from pathlib import Path
 import duckdb
 
 from .common import (MAX_FILES, MAX_FILE_BYTES, MAX_TOTAL_BYTES, VERSION, WorkbenchError,
-                     digest, file_hash, now, q, read_json, runtime_root, write_json)
+                     contained, digest, file_hash, now, q, read_json, require_inside, runtime_root, write_json)
 from .engine import build_view, process
 from .ingest import inspect
 from .recipe import starter_recipe, validate, migrate
@@ -27,6 +28,35 @@ def remove_path(path):
             path.unlink(missing_ok=True)
     except OSError:
         pass
+
+
+def is_link(path):
+    return path.is_symlink() or path.is_junction()
+
+
+def has_links(folder):
+    """True if the folder, or anything in it, is a symbolic link or a Windows junction."""
+    if is_link(folder):
+        return True
+    # os.walk is top-down, so this returns before it would descend into a link.
+    return any(is_link(Path(current) / name)
+               for current, folders, files in os.walk(folder) for name in folders + files)
+
+
+def check_stored_project(project, project_id):
+    """A project.json copied in from elsewhere must not steer file access outside its own folder.
+
+    Source identifiers and stored names become paths, so both must have the shape this app writes.
+    """
+    try:
+        valid = project["id"] == project_id and all(
+            re.fullmatch(r"[0-9a-f]{32}", source["id"])
+            and re.fullmatch(r"[0-9a-f]{64}\.(csv|xlsx)", source["stored_name"])
+            for source in project["sources"])
+    except (KeyError, TypeError):
+        valid = False
+    if not valid:
+        raise WorkbenchError("This project's saved file is damaged or was edited outside the app, so it was not opened.")
 
 
 def try_lock(handle):
@@ -126,13 +156,20 @@ class ProjectStore:
         """
         if not isinstance(folder, str) or not folder.strip():
             raise WorkbenchError("Choose the projects folder to copy from.")
-        source = Path(folder.strip().strip('"')).expanduser()
+        given = folder.strip().strip('"')
+        # Merely looking at \\server\share makes Windows sign in to that server, so refuse before touching it.
+        if given.replace("/", "\\").startswith("\\\\"):
+            raise WorkbenchError("Network and device paths are not accepted. Copy the folder to this computer first.")
+        source = Path(given).expanduser()
+        if not source.is_absolute():
+            raise WorkbenchError("Enter the folder's full path.")
         if not source.is_dir():
             raise WorkbenchError("That folder does not exist.")
         source = source.resolve()
         if source == self.root:
             raise WorkbenchError("That is this app's own projects folder.")
-        if (source / "projects").is_dir() and not any(source.glob("*/project.json")):
+        nested = source / "projects"
+        if not is_link(nested) and nested.is_dir() and not any(source.glob("*/project.json")):
             source = source / "projects"  # the download folder was chosen rather than its projects folder
         found = sorted(p.parent for p in source.glob("*/project.json") if self._is_id(p.parent.name))
         if not found:
@@ -142,13 +179,15 @@ class ProjectStore:
             staging = self.root / ".importing"
             remove_path(staging)
             for original in found:
-                name = read_json(original / "project.json").get("name", original.name)
+                if has_links(original):
+                    remove_path(staging)
+                    raise WorkbenchError(f"Project folder {original.name} contains links to other locations, so it was not copied.")
+                record = read_json(original / "project.json")
+                name = record.get("name", original.name)
                 if (self.root / original.name).exists():
                     skipped.append(name)
                     continue
-                if any(p.is_symlink() for p in [original, *original.rglob("*")]):
-                    remove_path(staging)
-                    raise WorkbenchError(f"{name} contains links to other locations, so it was not copied.")
+                check_stored_project(record, original.name)
                 copy_to = staging / original.name
                 shutil.copytree(original, copy_to)
                 for path in original.rglob("*"):
@@ -187,10 +226,17 @@ class ProjectStore:
         return project
 
     def list(self):
-        return sorted([read_json(p) for p in self.root.glob("*/project.json")], key=lambda p: p["created"], reverse=True)
+        # A record claiming another folder's identity would open that other project, so it is not listed.
+        records = ((p.parent.name, read_json(p)) for p in self.root.glob("*/project.json"))
+        return sorted([r for name, r in records if r.get("id") == name], key=lambda p: p["created"], reverse=True)
 
     def get(self, pid):
-        project = read_json(self.path(pid) / "project.json")
+        folder = self.path(pid)
+        project = read_json(folder / "project.json")
+        check_stored_project(project, pid)
+        require_inside(folder, folder / "raw")
+        for source in project["sources"]:
+            require_inside(folder, folder / "raw" / source["id"] / source["stored_name"])
         if project.get('recipe') is not None:
             project['recipe'] = migrate(project['recipe'])
         return project
@@ -278,7 +324,10 @@ class ProjectStore:
     def run_dir(self, pid, rid):
         if not isinstance(rid, str) or not all(c in "0123456789abcdef-" for c in rid) or len(rid) > 60 or not rid:
             raise WorkbenchError("Unknown run identifier.")
-        return self.path(pid) / "runs" / rid
+        folder = self.path(pid)
+        run = folder / "runs" / rid
+        require_inside(folder, run / "outputs" / "manifest.json")
+        return run
 
     def run_status(self, pid, rid):
         path = self.run_dir(pid, rid)
@@ -312,6 +361,11 @@ class ProjectStore:
                     raise WorkbenchError("Saved source bytes changed. Replace the affected source before running again.")
             for previous in self.path(pid).glob("runs/*/outputs/manifest.json"):
                 manifest = read_json(previous)
+                try:  # an unsafe earlier package is not reused, and none of the files it names are opened
+                    require_inside(self.path(pid), previous)
+                    contained(previous.parent, manifest.get("output_hashes", {}))
+                except WorkbenchError:
+                    continue
                 if manifest.get("fingerprint") == fingerprint and all((previous.parent / p).is_file() and file_hash(previous.parent / p) == h for p, h in manifest["output_hashes"].items()):
                     project["latest_run"] = previous.parent.parent.name
                     self.save(project)

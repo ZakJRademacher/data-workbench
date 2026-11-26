@@ -45,6 +45,25 @@ class WorkbenchError(ValueError):
     pass
 
 
+def require_inside(folder, path):
+    """Refuse a path that a link or junction would lead out of the folder it belongs to."""
+    if not Path(path).resolve().is_relative_to(Path(folder).resolve()):
+        raise WorkbenchError("This project contains a link to another location, so it was not opened.")
+
+
+def contained(root, names):
+    """Each name must be a plain file directly inside root.
+
+    A manifest copied in from elsewhere must not name files outside its own outputs folder: no
+    separators, "..", drive letters or alternate streams, and no links that lead elsewhere.
+    """
+    root = Path(root)
+    for name in names:
+        if (not isinstance(name, str) or name in ("", ".", "..") or any(c in name for c in "\\/:\0")
+                or (root / name).is_symlink() or (root / name).resolve().parent != root.resolve()):
+            raise WorkbenchError("This run's manifest names a file outside its outputs. Rerun to rebuild the package.")
+
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
