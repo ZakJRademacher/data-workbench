@@ -1,12 +1,12 @@
 # Data Workbench
 
+![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-3.0.0.png)
+
 Data Workbench is a local app for preparing related CSV and Excel files. You can combine exports, save cleaning rules, review questionable records, and join tables while keeping a record of where each value came from.
 
 The preparation steps stay visible and repeatable. The app keeps original files, separates corrections from raw values, and checks that joins don't multiply the records in the base table.
 
 **[Download for Windows](https://github.com/ZakJRademacher/data-workbench/releases/latest)** · [View the workspace](docs/images/review-3.0.0.png) · [Reconcile payments](docs/images/reconcile-3.0.0.png) · [Operating guide](docs/OPERATING_GUIDE.md) · [Comparison and limits](docs/COMPARISON.md)
-
-![Data Workbench review queue for the fictional customer, order, and payment demo](docs/images/review-3.0.0.png)
 
 > **About the Windows warning.** The setup isn't code-signed yet, so the first time you run it Windows SmartScreen may say it "protected your PC" because it doesn't recognize the app. Choose **More info**, then **Run anyway**. The download comes only from this repository's releases page, and every release is built by its [public workflow](.github/workflows/portable.yml).
 

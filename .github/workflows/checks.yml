@@ -1,0 +1,27 @@
+# Shared portfolio checks: https://github.com/ZakJRademacher/portfolio-ci
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  attribution:
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/attribution.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+
+  hygiene:
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/hygiene.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      require-live-link: false # desktop app, no live site
+
+  blocked-names:
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/blocked-names.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    secrets:
+      blocked-names: ${{ secrets.PORTFOLIO_BLOCKED }}
+      blocked-stems: ${{ secrets.PORTFOLIO_BLOCKED_STEMS }}
