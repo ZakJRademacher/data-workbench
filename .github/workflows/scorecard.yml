@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   scorecard:
-    uses: ZakJRademacher/portfolio-ci/.github/workflows/scorecard.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/scorecard.yml@e2365dabafc74c0cd450d1a9a4201f92ec17d518 # v1.0.0 + e2365da
     permissions:
       contents: read
       actions: read

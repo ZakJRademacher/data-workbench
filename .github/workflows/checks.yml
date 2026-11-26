@@ -10,10 +10,10 @@ permissions:
 
 jobs:
   attribution:
-    uses: ZakJRademacher/portfolio-ci/.github/workflows/attribution.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/attribution.yml@e2365dabafc74c0cd450d1a9a4201f92ec17d518 # v1.0.0 + e2365da
 
   hygiene:
-    uses: ZakJRademacher/portfolio-ci/.github/workflows/hygiene.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/hygiene.yml@e2365dabafc74c0cd450d1a9a4201f92ec17d518 # v1.0.0 + e2365da
     permissions:
       contents: read
       pull-requests: read
@@ -21,7 +21,7 @@ jobs:
       require-live-link: false # desktop app, no live site
 
   blocked-names:
-    uses: ZakJRademacher/portfolio-ci/.github/workflows/blocked-names.yml@7c84247e0686e837516f17dec4c8c244ec18b88a # v1.0.0
+    uses: ZakJRademacher/portfolio-ci/.github/workflows/blocked-names.yml@e2365dabafc74c0cd450d1a9a4201f92ec17d518 # v1.0.0 + e2365da
     secrets:
       blocked-names: ${{ secrets.PORTFOLIO_BLOCKED }}
       blocked-stems: ${{ secrets.PORTFOLIO_BLOCKED_STEMS }}
