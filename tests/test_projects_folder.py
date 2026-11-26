@@ -78,10 +78,12 @@ def test_a_copy_that_differs_from_the_original_is_discarded(store, earlier, monk
     assert store.list() == []
 
 
-@pytest.mark.parametrize("folder,message", [("", "Choose"), ("C:/no/such/folder/anywhere", "does not exist")])
-def test_unusable_folders_are_explained(store, folder, message):
-    with pytest.raises(WorkbenchError, match=message):
-        store.import_projects(folder)
+def test_unusable_folders_are_explained(store, tmp_path):
+    with pytest.raises(WorkbenchError, match="Choose"):
+        store.import_projects("")
+    # A full path on whichever system runs the test; "C:/..." is not one outside Windows.
+    with pytest.raises(WorkbenchError, match="does not exist"):
+        store.import_projects(str(tmp_path / "no" / "such" / "folder"))
 
 
 def test_a_folder_without_projects_or_this_apps_own_folder_is_refused(store, tmp_path):
